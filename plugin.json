@@ -1,0 +1,16 @@
+{
+  "slug": "CoffeeVCV",
+  "name": "CoffeeVCV",
+  "version": "2.0.0",
+  "license": "proprietary",
+  "brand": "CoffeeVCV",
+  "author": "CoffeeVCV",
+  "authorEmail": "CoffeeVCV@protonmail.com",
+  "authorUrl": "",
+  "pluginUrl": "",
+  "manualUrl": "",
+  "sourceUrl": "",
+  "donateUrl": "",
+  "changelogUrl": "",
+  "modules": []
+}
