@@ -52,7 +52,7 @@ struct Travel : Module {
 		configParam(P_SCALE1, 0.0f, 1.0f, 1.0f, "Scale", "%", 0.0f, 100.0f);
 		configParam(P_SCALE2, 0.0f, 1.0f, 1.0f, "Scale", "%", 0.0f, 100.0f);
 		configParam(P_OFFSET2, -5.0f, 5.0f, 0.0f, "Offset", " V");
-		configParam(P_SHAPE, -1.0f, 1.0f, 0.0f, "Shape");
+		configParam(P_SHAPE, -5.0f, 5.0f, 0.0f, "Shape");
 		configInput(I_TRIG, "Trigger");
 		configInput(I_DURATION, "Duration");
 		configInput(I_SHAPE, "Shape");
