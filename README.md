@@ -63,7 +63,14 @@ In1 = -5, In2 = 5
 
 HiLo takes two inputs and outputs the highest and lowest value of either input.
 
-Output is set when triggered manaully or via a clock.
+Output can be set via manaul or CV trigger.
 
-In1 and In2 are each first adjsusted via Scale and then Offset.
+In1 and In2 are each first adjusted via Scale and then Offset.
 If no CV input is provided, Offset can be used to set a value (-5v to 5v).
+
+In the context menu, there's an option to select either Track or 
+Hold.  The default is Hold, this mode requires Trigger to be activated to take a sample.
+In Track mode, inputs are continually sampled, but only if there's no Trigger CV connected.
+
+Here's an example of two overlapping wave inputs, and the resulting histest and lowest values. 
+![HiLo Scope](images/HiLo%20Scope.png)
