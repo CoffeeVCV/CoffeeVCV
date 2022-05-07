@@ -1,9 +1,9 @@
 {
-  "slug": "CoffeeVCV",
-  "name": "CoffeeVCV",
+  "slug": "Coffee",
+  "name": "Coffee",
   "version": "2.0.0",
   "license": "GPL-3.0-or-later",
-  "brand": "CoffeeVCV",
+  "brand": "Coffee",
   "author": "CoffeeVCV",
   "authorEmail": "CoffeeVCV@protonmail.com",
   "authorUrl": "",
@@ -14,7 +14,7 @@
   "changelogUrl": "https://github.com/CoffeeVCV/CoffeeVCV/CHANGELOG.md",
   "modules": [
     {
-      "slug": "Coffee-Between",
+      "slug": "Between",
       "name": "Between",
       "description": "On trigger, out puts a random CV value between two values.",
       "tags": [
@@ -22,13 +22,13 @@
       ]
     },
     {
-      "slug": "Coffee-Travel",
+      "slug": "Travel",
       "name": "Travel",
       "description": "On trigger, take two samples and interpolate an output",
       "tags": ["utility"]
     },
     {
-      "slug": "Coffee-HiLo",
+      "slug": "HiLo",
       "name": "HiLo",
       "description": "Given one or two inputs, output the maximum and minimum voltage.",
       "tags": [
