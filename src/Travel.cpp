@@ -42,6 +42,7 @@ struct Travel : Module {
 	float i_CV1=0.f;
 	float p_shape=0.f;
 	float targetDuration=0.f;
+	bool track=false;
 
 	Travel() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -62,36 +63,50 @@ struct Travel : Module {
 		configOutput(O_CV1, "Output");
 	}
 
-	void process(const ProcessArgs& args) override {
-
+	void updateInputs(const ProcessArgs& args) {
 		float p_scale1=params[P_SCALE1].getValue();
 		float p_offset1=params[P_OFFSET1].getValue();
 
 		float p_scale2=params[P_SCALE2].getValue();
 		float p_offset2=params[P_OFFSET2].getValue();
 		int p_durationscale=params[P_DURATIONSCALE].getValue();
+		//get inputs
+		i_CV1=(inputs[I_CV1].getVoltage() * p_scale1) + p_offset1;
+		i_CV2=(inputs[I_CV2].getVoltage() * p_scale2) + p_offset2;
 
-		bool pulse = eocPulse.process(args.sampleTime);
-		outputs[O_EOC].setVoltage(pulse ? 10.f : 0.f);
-
+		//get duration
 		targetDuration=params[P_DURATION].getValue() * durationScales[p_durationscale];
 		if(inputs[I_DURATION].isConnected()){
 			targetDuration=inputs[I_DURATION].getVoltage() * durationScales[p_durationscale];
 		}
 
+		//get shape
 		p_shape=params[P_SHAPE].getValue()/5;
 		if(inputs[I_SHAPE].isConnected()){
 			p_shape=clamp(inputs[I_SHAPE].getVoltage(),-5.f, 5.f)/5;
 		}
+	}
 
+	void process(const ProcessArgs& args) override {
+
+		bool pulse = eocPulse.process(args.sampleTime);
+		outputs[O_EOC].setVoltage(pulse ? 10.f : 0.f);
+
+		// start the cycle
 		float b_trigger=params[P_TRIG1].getValue();
 		float i_trigger=inputs[I_TRIG].getVoltage();
-		if( !cycling && (clockTrigger.process(i_trigger) | buttonTrigger.process(b_trigger))){
+		if( (!cycling | track) && (clockTrigger.process(i_trigger) | buttonTrigger.process(b_trigger))){
 			cycleStart=args.frame;
-			i_CV1=(inputs[I_CV1].getVoltage() * p_scale1) + p_offset1;
-			i_CV2=(inputs[I_CV2].getVoltage() * p_scale2) + p_offset2;			
 			cycling=true;
 		} 
+
+		if((cycling && track) | !cycling ){
+			updateInputs(args);
+		}
+
+
+
+
 
 		if(cycling){
 			cycleProgress=((args.frame-cycleStart)/args.sampleRate)/targetDuration;
@@ -118,7 +133,9 @@ struct Travel : Module {
 			}
 		}
 	}
-};
+};	
+
+
 
 struct TravelWidget : ModuleWidget {
 	TravelWidget(Travel* module) {
@@ -149,6 +166,21 @@ struct TravelWidget : ModuleWidget {
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(lx, 112)), module, Travel::O_CV1));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(rx, 112)), module, Travel::O_EOC));
 	}
+	void appendContextMenu(Menu* menu) override {
+			Travel* module = dynamic_cast<Travel*>(this->module);
+			assert(module);
+
+			menu->addChild(new MenuSeparator());
+			menu->addChild(createSubmenuItem("Track/Hold Inputs", "", [=](Menu* menu) {
+				Menu* trackholdMenu = new Menu();
+				trackholdMenu->addChild(createMenuItem("Track", CHECKMARK(module->track == true), [module]() { module->track = true; }));
+				trackholdMenu->addChild(createMenuItem("Hold", CHECKMARK(module->track == false), [module]() { module->track = false; }));
+				menu->addChild(trackholdMenu);
+			}));
+		}	
 };
+
+
+
 
 Model* modelTravel = createModel<Travel, TravelWidget>("Travel");
