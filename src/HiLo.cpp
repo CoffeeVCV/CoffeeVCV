@@ -56,7 +56,7 @@ struct HiLo : Module {
 		float v1=(inputs[I_V1].getVoltage() * p_scale1)+p_offset1;
 		float v2=(inputs[I_V2].getVoltage() * p_scale2)+p_offset2;
 
-		if( (track and !inputs[I_TRIG].isConnected() | clockTrigger.process(i_trigger) | buttonTrigger.process(b_trigger)){
+		if( (track and !inputs[I_TRIG].isConnected()) | clockTrigger.process(i_trigger) | buttonTrigger.process(b_trigger)){
 			outputs[O_HI].setVoltage(fmax(v1,v2));
 			outputs[O_LO].setVoltage(fmin(v1,v2));
 		}
