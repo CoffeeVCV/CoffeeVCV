@@ -2,16 +2,16 @@
   "slug": "CoffeeVCV",
   "name": "CoffeeVCV",
   "version": "2.0.0",
-  "license": "proprietary",
+  "license": "GPL-3.0-or-later",
   "brand": "CoffeeVCV",
   "author": "CoffeeVCV",
   "authorEmail": "CoffeeVCV@protonmail.com",
   "authorUrl": "",
   "pluginUrl": "",
-  "manualUrl": "",
-  "sourceUrl": "",
+  "manualUrl": "https://github.com/CoffeeVCV/CoffeeVCV",
+  "sourceUrl": "https://github.com/CoffeeVCV/CoffeeVCV",
   "donateUrl": "",
-  "changelogUrl": "",
+  "changelogUrl": "https://github.com/CoffeeVCV/CoffeeVCV/CHANGELOG.md",
   "modules": [
     {
       "slug": "Between",
@@ -25,7 +25,7 @@
       "slug": "Travel",
       "name": "Travel",
       "description": "On trigger, take two samples and interpolate an output",
-      "tags": []
+      "tags": ["utility"]
     },
     {
       "slug": "HiLo",
