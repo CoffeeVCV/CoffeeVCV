@@ -5,6 +5,8 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack), an open-source Eurorack
   - [Travel](#Travel)
   - [Between](#Between)
   - [HiLo](#HiLo)
+  - [Some](#Some)
+  
 
 ## <a name="Travel"></a> Travel
 ![Travel panel](images/Travel1.png)
@@ -74,3 +76,18 @@ In Track mode, inputs are continually sampled, but only if there's no Trigger CV
 
 Here's an example of two overlapping wave inputs, and the resulting histest and lowest values. 
 ![HiLo Scope](images/HiLo%20Scope.png)
+
+## <a name="Some"></a> Some
+![Some panel](images/Some-Panel.png)
+
+The Some module accepts up to 8 inputs, and will output 8 or less depending on a Probability parameter.
+The selection is randomised and made using the manual or CV trigger.
+Only connected inputs are included in the selection process.  Selected inpute are indicated with an illuminated green led.
+
+In this example all 8 are connected, Probability is set to 0.5.
+Only 4 inputs are passed through.  When triggered again, a different 4 will be selected.
+![Some panel](images/Some-Example1.png)
+
+In this example with only 4 connected, Probability is still 0.5, so only 2 inpute are selected.
+![Some panel](images/Some-Example2.png)
+
