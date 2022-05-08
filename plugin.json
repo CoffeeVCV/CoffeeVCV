@@ -7,11 +7,11 @@
   "author": "CoffeeVCV",
   "authorEmail": "CoffeeVCV@protonmail.com",
   "authorUrl": "",
-  "pluginUrl": "",
-  "manualUrl": "https://github.com/CoffeeVCV/CoffeeVCV",
-  "sourceUrl": "https://github.com/CoffeeVCV/CoffeeVCV",
+  "pluginUrl": "https://github.com/CoffeeVCV/CoffeeVCV/",
+  "manualUrl": "https://github.com/CoffeeVCV/CoffeeVCV/blob/master/README.md",
+  "sourceUrl": "https://github.com/CoffeeVCV/CoffeeVCV/blob/master/README.md",
   "donateUrl": "",
-  "changelogUrl": "https://github.com/CoffeeVCV/CoffeeVCV/CHANGELOG.md",
+  "changelogUrl": "https://github.com/CoffeeVCV/CoffeeVCV/blob/master/CHANGELOG.md",
   "modules": [
     {
       "slug": "Between",
@@ -34,7 +34,7 @@
     {
       "slug": "Some",
       "name": "Some",
-      "description": "From a group of imputs, allow some to pass through",
+      "description": "From a group of active inputs, when triggered, mute a number of the inputs, based on a probability",
       "tags": ["Utility","Random"]
     }
   ]
