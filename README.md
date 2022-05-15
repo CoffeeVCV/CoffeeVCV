@@ -74,7 +74,8 @@ In the context menu, there's an option to select either Track or
 Hold.  The default is Hold, this mode requires Trigger to be activated to take a sample.
 In Track mode, inputs are continually sampled, but only if there's no Trigger CV connected.
 
-Here's an example of two overlapping wave inputs, and the resulting histest and lowest values. 
+Here's an example of two overlapping wave inputs, and the resulting histest and lowest values.
+
 ![HiLo Scope](images/HiLo%20Scope.png)
 
 ## <a name="Some"></a> Some
@@ -86,8 +87,10 @@ Only connected inputs are included in the selection process.  Selected inpute ar
 
 In this example all 8 are connected, Probability is set to 0.5.
 Only 4 inputs are passed through.  When triggered again, a different 4 will be selected.
+
 ![Some panel](images/Some-Example1.png)
 
 In this example with only 4 connected, Probability is still 0.5, so only 2 inpute are selected.
+
 ![Some panel](images/Some-Example2.png)
 
