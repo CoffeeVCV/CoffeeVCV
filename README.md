@@ -9,7 +9,7 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack), an open-source Eurorack
   
 
 ## <a name="Travel"></a> Travel
-![Travel panel](images/Travel1.png)
+![Travel panel](images/Travel-Panel.png)
 
 Travel take two values and outputs an interpolation over a defined period of time.
 
@@ -42,7 +42,7 @@ In these images, orange is the interpolated value, and blue is the EoC pulse.
 
 
 ## <a name="Between"></a> Between
-![Travel panel](images/Between.png)
+![Travel panel](images/Between-Panel.png)
 
 Between will provide a random value, limited by two input values.
 
@@ -61,7 +61,7 @@ In1 = -5, In2 = 5
 
 
 ## <a name="HiLo"></a> HiLo
-![HiLo panel](images/HiLo.png)
+![HiLo panel](images/HiLo-Panel.png)
 
 HiLo takes two inputs and outputs the highest and lowest value of either input.
 
@@ -88,9 +88,9 @@ Only connected inputs are included in the selection process.  Selected inpute ar
 In this example all 8 are connected, Probability is set to 0.5.
 Only 4 inputs are passed through.  When triggered again, a different 4 will be selected.
 
-![Some panel](images/Some-Example1.png)
+![Some Example 1](images/Some-Example1.png)
 
 In this example with only 4 connected, Probability is still 0.5, so only 2 inpute are selected.
 
-![Some panel](images/Some-Example2.png)
+![Some Example 2](images/Some-Example2.png)
 
