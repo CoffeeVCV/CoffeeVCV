@@ -17,7 +17,7 @@
       "slug": "Between",
       "name": "Between",
       "description": "On trigger, out puts a random CV value between two values.",
-      "tags": ["Random","Sample and hold"]
+      "tags": ["Utility","Random","Sample and hold"]
     },
     {
       "slug": "Travel",
@@ -36,6 +36,14 @@
       "name": "Some",
       "description": "From a group of active inputs, when triggered, mute a number of the inputs, based on a probability",
       "tags": ["Utility","Random"]
+    },
+    {
+      "slug": "Together",
+      "name": "Together",
+      "description": "An 8 channel, 4 group Euclidian sequencer, with triggered randomized movement.",
+      "tags": [
+        "utility","Clock modulator","Logic","Random","Seqencer"
+      ]
     }
   ]
 }
