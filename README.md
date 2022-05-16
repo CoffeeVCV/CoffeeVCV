@@ -13,7 +13,7 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack), an open-source Eurorack
 ## <a name="Together"></a> Together
 ![Together panel](images/Together-Panel.png)
 
-Together, is a fun Euclidian sequencer which provides a back of divider, resulting in triggers and gates, and 4 CV outputs.
+Together, is a fun Euclidian sequencer which provides a bank of dividers, resulting in triggers and gates, and 4 CV outputs.
 
 ### Features
 * Clock \ Trigger input
