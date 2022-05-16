@@ -13,3 +13,4 @@ extern Model* modelBetween;
 extern Model* modelTravel;
 extern Model* modelHiLo;
 extern Model* modelSome;
+extern Model* modelTogether;

@@ -11,6 +11,7 @@ void init(Plugin* p) {
 	p->addModel(modelTravel);
 	p->addModel(modelHiLo);
 	p->addModel(modelSome);
+	p->addModel(modelTogether);
 
 	// Any other plugin initialization may go here.
 	// As an alternative, consider lazy-loading assets and lookup tables when your module is created to reduce startup times of Rack.
