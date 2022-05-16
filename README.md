@@ -9,7 +9,7 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack), an open-source Eurorack
   - [Some](#Some)
   
 
-
+---
 ## <a name="Together"></a> Together
 ![Together panel](images/Together-Panel.png)
 
@@ -114,6 +114,7 @@ Groups
 
 The top row of the module has the controls to adjust dividers and groups.  Most are CV Inputs with manul triggers.
 ![Together-NudgeRND](images/Together-StepNudgeRND.png)
+
 From left to right the controls are.
 
 1. Divider adjust
@@ -142,7 +143,7 @@ Each of these will replace all the CV values with an adjusted value.
 * Nudge +/- the value of [Adjustment Limit](#AdjustmentLimit)
 
 #### All rows and columns 
-This will adjust every control in the 4 x 8 matrix, in the same way the group adjust.
+This will adjust every control in the 4 x 8 matrix.
 
 #### <a name="Adjustment Limit">Adjustment Limit</a>
 This control set the amount that will be added to, or substracted from CV control, when mode is Nudge.  The default is 0.05v.
@@ -150,8 +151,9 @@ This control set the amount that will be added to, or substracted from CV contro
 #### Row Adjustment 
 To the immediate right of column 4, is the triggers for each row.  These operate in the same way as columns.
 
-###
+![Together-NudgeRND](images/Together-RowNudge.png)
 
+---
 
 ## <a name="Travel"></a> Travel
 ![Travel panel](images/Travel-Panel.png)
@@ -185,7 +187,7 @@ In these images, orange is the interpolated value, and blue is the EoC pulse.
 
 ![Shape 0v Linear](images/Travel%20Shape%205.png)
 
-
+---
 ## <a name="Between"></a> Between
 ![Travel panel](images/Between-Panel.png)
 
@@ -204,7 +206,7 @@ In1 = -5, In2 = 5
 
 ![Between Scope](images/BetweenScope.png)
 
-
+---
 ## <a name="HiLo"></a> HiLo
 ![HiLo panel](images/HiLo-Panel.png)
 
@@ -223,6 +225,7 @@ Here's an example of two overlapping wave inputs, and the resulting histest and 
 
 ![HiLo Scope](images/HiLo%20Scope.png)
 
+---
 ## <a name="Some"></a> Some
 ![Some panel](images/Some-Panel.png)
 
