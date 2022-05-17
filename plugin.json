@@ -1,7 +1,7 @@
 {
   "slug": "Coffee",
   "name": "Coffee",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "license": "GPL-3.0-or-later",
   "brand": "Coffee",
   "author": "CoffeeVCV",
@@ -42,7 +42,7 @@
       "name": "Together",
       "description": "An 8 channel, 4 group Euclidian sequencer, with triggered randomized movement.",
       "tags": [
-        "utility","Clock modulator","Logic","Random","Seqencer"
+        "utility","Clock modulator","Logic","Random","Sequencer"
       ]
     }
   ]
