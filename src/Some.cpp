@@ -59,7 +59,7 @@ struct Some : Module {
 
 			//shuffle the array
 			for(int i=0;i<int(sigs.size());i++){
-				std::swap(sigs[i], sigs[(sigs.size()-1) * random::uniform()]);
+				std::swap(sigs[i], sigs[sigs.size() * random::uniform()]);
 			}
 
 			//reset the main array
