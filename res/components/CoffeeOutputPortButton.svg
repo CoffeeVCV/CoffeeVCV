@@ -6,12 +6,12 @@
    id="svg15246"
    x="0px"
    y="0px"
-   width="8mm"
-   height="8mm"
-   viewBox="0 0 30.23622 30.23622"
+   width="10.124mm"
+   height="9.9639997mm"
+   viewBox="0 0 38.263935 37.659211"
    enable-background="new 0 0 23.7 23.7"
    xml:space="preserve"
-   sodipodi:docname="CoffeeOutputPort.svg"
+   sodipodi:docname="CoffeeOutputPortButton.svg"
    inkscape:version="1.1.2 (b8e25be8, 2022-02-05)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -105,8 +105,8 @@
    fit-margin-top="0"
    id="base"
    inkscape:current-layer="svg15246"
-   inkscape:cx="44.362079"
-   inkscape:cy="-10.506808"
+   inkscape:cx="16.011158"
+   inkscape:cy="16.17679"
    inkscape:document-units="mm"
    inkscape:pageopacity="0.0"
    inkscape:pageshadow="2"
@@ -119,11 +119,13 @@
    inkscape:window-width="1280"
    inkscape:window-x="0"
    inkscape:window-y="25"
-   inkscape:zoom="3.8546435"
+   inkscape:zoom="9.0561847"
    pagecolor="#ffffff"
    showgrid="false"
    units="mm"
-   inkscape:pagecheckerboard="0">
+   inkscape:pagecheckerboard="0"
+   showguides="false"
+   width="10.124mm">
 	</sodipodi:namedview>
 
 
@@ -153,16 +155,23 @@
 
 
 <rect
-   style="fill:#603601;stroke:#1c0a00;stroke-width:0.971674;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;stop-color:#000000;fill-opacity:1"
+   style="fill:#803300;fill-opacity:1;stroke:#1c0a00;stroke-width:0.971674;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;stop-color:#000000"
    id="rect2351"
    width="29.264545"
    height="29.264545"
-   x="0.48583701"
-   y="0.48583701"
+   x="4.650876"
+   y="4.3292751"
    rx="3.6580682"
-   ry="3.6580682" /><g
+   ry="3.6580682" /><ellipse
+   style="font-variation-settings:normal;display:inline;fill:#fdf2dd;fill-opacity:1;stroke:#1c0a00;stroke-width:1.01015;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;stop-color:#000000"
+   id="path926-4"
+   cx="32.265827"
+   cy="5.6746187"
+   rx="5.3418536"
+   ry="5.3399639" /><g
    id="g200"
-   transform="translate(3.2681047,3.1901648)">
+   transform="translate(7.4331439,7.0336029)"
+   style="display:inline">
 	<g
    id="g145">
 		
@@ -359,4 +368,10 @@
    r="4.8673301"
    id="circle198" />
 </g>
-</svg>
+<ellipse
+   style="display:none;fill:#603601;fill-opacity:1;stroke:#1c0a00;stroke-width:0.359954;stroke-opacity:1;stop-color:#000000"
+   id="path926"
+   cx="28.251968"
+   cy="5.6746187"
+   rx="3.5995502"
+   ry="3.5995505" /></svg>
