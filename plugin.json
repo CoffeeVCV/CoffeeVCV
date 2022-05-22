@@ -44,6 +44,14 @@
       "tags": [
         "utility","Clock modulator","Logic","Random","Sequencer"
       ]
+    },
+    {
+      "slug": "Tumble",
+      "name": "Tumble",
+      "description": "A chain of up to 8 countdowns, which can produce bursts of triggers or gates.",
+      "tags": [
+        "utility","Clock modulator","Logic","Sequencer"
+      ]
     }
   ]
 }
