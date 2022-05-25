@@ -40,7 +40,7 @@
     {
       "slug": "Together",
       "name": "Together",
-      "description": "An 8 channel, 4 group Euclidian sequencer, with triggered randomized movement.",
+      "description": "An 8 channel, 4 group sequencer, with triggered randomized movement.",
       "tags": [
         "utility","Clock modulator","Logic","Random","Sequencer"
       ]
@@ -48,7 +48,23 @@
     {
       "slug": "Tumble",
       "name": "Tumble",
-      "description": "A chain of up to 8 countdowns, which can produce bursts of triggers or gates.",
+      "description": "A chain of up to 8 pulse countdowns, which can produce bursts of triggers or gates.",
+      "tags": [
+        "utility","Clock modulator","Logic","Sequencer"
+      ]
+    },
+    {
+      "slug": "Set",
+      "name": "Set",
+      "description": "Dual offset and scaling with CV control.",
+      "tags": [
+        "utility","Dual"
+      ]
+    },
+    {
+      "slug": "Fork",
+      "name": "Fork",
+      "description": "Provide two inputs and a probability/chance, will output one.",
       "tags": [
         "utility","Clock modulator","Logic","Sequencer"
       ]

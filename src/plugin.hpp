@@ -15,3 +15,5 @@ extern Model* modelHiLo;
 extern Model* modelSome;
 extern Model* modelTogether;
 extern Model* modelTumble;
+extern Model* modelFork;
+extern Model* modelSet;
