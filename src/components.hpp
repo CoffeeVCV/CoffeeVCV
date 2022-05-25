@@ -3,6 +3,21 @@
 
 using namespace rack;
 
+struct CoffeeTrimpot : app::SvgKnob {
+	widget::SvgWidget* bg;
+
+	CoffeeTrimpot() {
+		minAngle = -0.75 * M_PI;
+		maxAngle = 0.75 * M_PI;
+		shadow->opacity=0;
+		bg = new widget::SvgWidget;
+		fb->addChildBelow(bg, tw);
+
+		setSvg(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeTrimpot.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeTrimpot_bg.svg")));
+	}
+};
+
 template <typename TBase = GrayModuleLightWidget>
 struct TOrangeLight : TBase {
 	TOrangeLight() {
@@ -55,10 +70,32 @@ struct CoffeeOutputPort : app::SvgPort {
 		setSvg(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeOutputPort.svg")));
 	}
 };
+
+struct CoffeeOutputPortIndicator : app::SvgPort {
+	CoffeeOutputPortIndicator() {
+		shadow->opacity=0;
+		setSvg(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeOutputPortIndicator.svg")));
+	}
+};
+
+struct CoffeeOutputPortButton : app::SvgPort {
+	CoffeeOutputPortButton() {
+		shadow->opacity=0;
+		setSvg(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeOutputPortButton.svg")));
+	}
+};
+
 struct CoffeeInputPort : app::SvgPort {
 	CoffeeInputPort() {
 		shadow->opacity=0;
 		setSvg(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeInputPort.svg")));
+	}
+};
+
+struct CoffeeInputPortIndicator : app::SvgPort {
+	CoffeeInputPortIndicator() {
+		shadow->opacity=0;
+		setSvg(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeInputPortIndicator.svg")));
 	}
 };
 
