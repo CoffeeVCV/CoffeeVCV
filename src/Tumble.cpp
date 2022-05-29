@@ -47,20 +47,19 @@ struct Tumble: Module {
     int currentCounter = 0;
     int eocRow;
     bool runState = false;
-    // bool runToggleReady = true;
 	bool modeToggleReady = true;
 	int Mode;
 
-    dsp::SchmittTrigger clockTrigger;
-    dsp::SchmittTrigger startTrigger;
-    dsp::SchmittTrigger resetTrigger;
-    dsp::BooleanTrigger clockButtonTrigger;
-    dsp::BooleanTrigger startButtonTrigger;
-    dsp::BooleanTrigger modeButtonTrigger;
-    dsp::BooleanTrigger resetButtonTrigger;
-    dsp::PulseGenerator rowPulse[NUM_ROWS];
-    dsp::PulseGenerator eocPulse;
-    dsp::PulseGenerator globalPulse;
+    dsp::SchmittTrigger _clockTrigger;
+    dsp::SchmittTrigger _startTrigger;
+    dsp::SchmittTrigger _resetTrigger;
+    dsp::BooleanTrigger _clockButtonTrigger;
+    dsp::BooleanTrigger _startButtonTrigger;
+    dsp::BooleanTrigger _resetButtonTrigger;
+    dsp::PulseGenerator _rowPulse[NUM_ROWS];
+    dsp::PulseGenerator _eocPulse;
+    dsp::PulseGenerator _globalPulse;
+    dsp::ClockDivider _lowPriority;
 
     Tumble() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -70,7 +69,7 @@ struct Tumble: Module {
         configInput(I_RESET, "Reset Trig");
         configParam(P_START_BUTTON, 0.f, 1.f, 0.f, "Manual Start");
         configInput(I_START, "Stat Trig");
-        configButton(P_MODE_BUTTON,"Once/Loop Mode");
+        configSwitch(P_MODE_BUTTON,0,1,0,"Once/Loop Mode",{"Once","Loop"});
         for (int i = 0; i < NUM_ROWS; i++) {
             configParam(P_COUNTER + i, 0.f, 16.f, 0.f, string::f("Counter %d", i + 1));
             paramQuantities[P_COUNTER + i] -> snapEnabled = true;
@@ -80,9 +79,9 @@ struct Tumble: Module {
         configOutput(O_EOC, "End of Cycle");
         configOutput(O_ORTRIG, "Global Trig");
         configOutput(O_ORGATE, "Global Gate");
-		Mode=LOOP;
-		ToggleMode();
+		Mode=ONCE;
         reset();
+        _lowPriority.setDivision(16);
     }
 
     void reset() {
@@ -97,40 +96,23 @@ struct Tumble: Module {
         currentCounter = 0;
     }
 
-	void ToggleMode() {
-		if(Mode==ONCE) {
-			Mode=LOOP;
-			lights[L_ONCEMODE].setBrightness(0);
-			lights[L_LOOPMODE].setBrightness(1);
-		} else {
-			Mode=ONCE;
-			lights[L_ONCEMODE].setBrightness(1);
-			lights[L_LOOPMODE].setBrightness(0);
-		}		
-	}
-
     void process(const ProcessArgs & args) override {
-        bool clock = clockTrigger.isHigh();
+        bool clock = _clockTrigger.isHigh();
         float pulse;
 
-        if (startTrigger.process(inputs[I_START].getVoltage() || startButtonTrigger.process(params[P_START_BUTTON].getValue()))) {
+        if (_startTrigger.process(inputs[I_START].getVoltage() || _startButtonTrigger.process(params[P_START_BUTTON].getValue()))) {
             runState = (runState) ? false : true;
             lights[L_START].setBrightness((runState) ? 1 : 0);
         }
 
-        if (resetTrigger.process(inputs[I_RESET].getVoltage() || resetButtonTrigger.process(params[P_RESET_BUTTON].getValue()))) {
+        if (_resetTrigger.process(inputs[I_RESET].getVoltage() || _resetButtonTrigger.process(params[P_RESET_BUTTON].getValue()))) {
             reset();
         }
 
-		// Mode 
-		if ( modeButtonTrigger.process(params[P_MODE_BUTTON].getValue())) {
-			ToggleMode();
-		}
-
-        pulse = eocPulse.process(args.sampleTime);
+        pulse = _eocPulse.process(args.sampleTime);
         outputs[O_EOC].setVoltage(pulse ? 10.f : 0.f);
 
-        pulse = globalPulse.process(args.sampleTime);
+        pulse = _globalPulse.process(args.sampleTime);
         outputs[O_ORTRIG].setVoltage(pulse ? 10.f : 0.f);
         outputs[O_ORGATE].setVoltage(clock ? 10.f : 0.f);
 
@@ -154,7 +136,7 @@ struct Tumble: Module {
             // find eoc, highest numbered counter with non-zero start
             if (initialCount[i] > 0) eocRow = i;
 
-            pulse = rowPulse[i].process(args.sampleTime);
+            pulse = _rowPulse[i].process(args.sampleTime);
             outputs[O_TRIG + i].setVoltage(pulse ? 10.f : 0);
             outputs[O_GATE + i].setVoltage((clock && i == currentCounter) ? 10.f : 0.f);
 
@@ -163,18 +145,18 @@ struct Tumble: Module {
             lights[L_PROGRESS + i].setBrightnessSmooth(v, args.sampleTime);
         }
 
-        if (runState && clockTrigger.process(inputs[I_TRIG].getVoltage() || clockButtonTrigger.process(params[P_TRIG_BUTTON].getValue()))) {
+        if (runState && _clockTrigger.process(inputs[I_TRIG].getVoltage() || _clockButtonTrigger.process(params[P_TRIG_BUTTON].getValue()))) {
             //process each counter
 			for (int i = 0; i < NUM_ROWS; i++) {
 				//if this counter is not finished
                 if (counts[i] > 0) {
 					//pulse
-                    rowPulse[i].trigger(1e-3f);
-                    globalPulse.trigger(1e-3f);
+                    _rowPulse[i].trigger(1e-3f);
+                    _globalPulse.trigger(1e-3f);
                     counts[i]--;
 					//if that was the last pulse, do eoc
                     if (i == eocRow && counts[i] == 0) {
-                        eocPulse.trigger(1e-3f);
+                        _eocPulse.trigger(1e-3f);
                         reset();
 						if(Mode==ONCE) {
 							runState = false;;
@@ -185,6 +167,15 @@ struct Tumble: Module {
                     break;
                 }
             }
+        }
+
+        //low priority
+        if(_lowPriority.process()){
+
+            // Mode 
+            Mode=params[P_MODE_BUTTON].getValue();
+            lights[L_ONCEMODE].setBrightness(!Mode);
+			lights[L_LOOPMODE].setBrightness(Mode);
         }
     }
 };
@@ -212,16 +203,12 @@ struct TumbleWidget: ModuleWidget {
 
 		//mode
 		x=x + (s*2);
-		addParam(createParamCentered<CoffeeButtonVertIndicator>(mm2px(Vec(x, y)), module, Tumble::P_MODE_BUTTON));
-		addChild(createLightCentered<TinyLight<OrangeLight>>(mm2px(Vec(x, y)), module, Tumble::L_ONCEMODE));
-		addChild(createLightCentered<TinyLight<OrangeLight>>(mm2px(Vec(x, y+2)), module, Tumble::L_LOOPMODE));
-
-
+		addParam(createParamCentered<CoffeeSwitch2PosVert>(mm2px(Vec(x, y)), module, Tumble::P_MODE_BUTTON));
 
         x = xoffset;
         for (int i = 0; i < NUM_ROWS; i++) {
             y = yoffset + (s * i);
-            addParam(createParamCentered < RoundBlackKnob > (mm2px(Vec(x, y)), module, Tumble::P_COUNTER + i));
+            addParam(createParamCentered < CoffeeKnob8mm > (mm2px(Vec(x, y)), module, Tumble::P_COUNTER + i));
             addChild(createLightCentered < TinyLight < YellowLight >> (mm2px(Vec(x + 6, y)), module, Tumble::L_PACTIVE + i));
             addChild(createLightCentered < MediumLight < YellowLight >> (mm2px(Vec(x + s, y - 2)), module, Tumble::L_PROGRESS + i));
             addChild(createLightCentered < MediumLight < GreenLight >> (mm2px(Vec(x + s, y + 2)), module, Tumble::L_PTRIG + i));
