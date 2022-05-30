@@ -7,6 +7,14 @@
   * Adding new module 
   * Together : An 8 channel, 4 group Euclidian sequencer, with triggered randomized movement.
 
-## v2.2.0 22 May 2022
-  * Adding new Module
-  * Tumble : A chain of up to 8 countdowns, which can produce bursts of triggers or gates.
+## v2.2.0 NN May 2022
+  * Added modeule Tumble
+    * A chain of up to 8 countdowns, which can produce bursts of triggers or gates.
+  * Added module Set
+  * Added module Fork
+  * Update module Some
+    * Bug Fixes
+    * Cosmetic changes
+  * Update module Together
+    * Bug fixes
+    * Cosmetic changes

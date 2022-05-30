@@ -64,7 +64,7 @@
     {
       "slug": "Fork",
       "name": "Fork",
-      "description": "Provide two inputs and a probability/chance, will output one.",
+      "description": "Provide two inputs and a probability/chance, will output one, when triggered.",
       "tags": [
         "utility","Clock modulator","Logic","Sequencer"
       ]

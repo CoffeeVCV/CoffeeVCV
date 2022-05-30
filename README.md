@@ -2,12 +2,58 @@
 
 Modules for [VCV Rack](https://github.com/VCVRack/Rack), an open-source Eurorack-style virtual modular synthesizer:
 
+  - [Tumble](#Tumble)
   - [Together](#Together)
   - [Travel](#Travel)
   - [Between](#Between)
   - [HiLo](#HiLo)
   - [Some](#Some)
   
+---
+## <a name="Tumble"></a> Tumble
+![Tumble panel](images/Tumble-Panel.png)
+
+Tumble, provides chain of up to 8 pulsing countdowns, which can produce bursts of triggers or gates.  This can be used as a sequencer, or a pulse generator.  Pairs well with other logic modules.
+
+### Features
+* Clock \ Trigger input with manual button
+* Start trigger input with manual button and indicator light
+* Reset trigger input with manual button
+* Once \ Loop mode switch
+* 8 Countdowns with a range of 1 - 64, each with
+  * Trigger and Gate output
+  * Activity light
+  * Indicator lights
+* Global trigger outputs
+* Global gate output
+* End of Cycle Trigger output
+
+### Basic Operation
+1. Connect a clock to clock
+2. Set some counters to non zero values.
+3. Press or trigger Start
+
+Once started, on each clock pulse the counters will start to countdown.
+Counters are prioritized, from top to bottom.
+Once a counter reaches zero, the next coundown with start.
+Each time a counter decreases, a pulse is sen to it's trigger and gate, and also the global trigger and gate.
+On the last count of the last couhter, the End Of Cycle trigger will pulse.
+If the mode swicth is set ot Once, antgher start trigger is needed to start again.
+If the mode it set to loop, it will start automatically on the next clock pulse.
+
+In the following example there are two counters configured.
+* Counter #1 set to 3 steps (shown as red on scope)
+* Counter #2 set to 1 (orange on scope)
+
+We can see the triggers in red and orange in the scope.
+
+Global gate is the green scope.
+Global trig and End of Cycle trig are shown on the left scope, in purple and blue.
+
+
+![Together panel](images/Tumble-Example.png)
+
+
 
 ---
 ## <a name="Together"></a> Together
