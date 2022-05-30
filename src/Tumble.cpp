@@ -32,8 +32,6 @@ struct Tumble: Module {
             ENUMS(L_PTRIG, NUM_ROWS),
             ENUMS(L_PROGRESS, NUM_ROWS),
             L_START,
-			L_ONCEMODE,
-			L_LOOPMODE,
             LIGHTS_LEN
     };
 
@@ -97,7 +95,9 @@ struct Tumble: Module {
     }
 
     void process(const ProcessArgs & args) override {
-        bool clock = _clockTrigger.isHigh();
+        //bool clock = _clockTrigger.isHigh();
+        bool clock=_clockTrigger.process(inputs[I_TRIG].getVoltage());
+
         float pulse;
 
         if (_startTrigger.process(inputs[I_START].getVoltage() || _startButtonTrigger.process(params[P_START_BUTTON].getValue()))) {
@@ -145,7 +145,8 @@ struct Tumble: Module {
             lights[L_PROGRESS + i].setBrightnessSmooth(v, args.sampleTime);
         }
 
-        if (runState && _clockTrigger.process(inputs[I_TRIG].getVoltage() || _clockButtonTrigger.process(params[P_TRIG_BUTTON].getValue()))) {
+        bool clockButtonPressed=_clockButtonTrigger.process(params[P_TRIG_BUTTON].getValue());
+        if (runState && ( clock || clockButtonPressed)) {
             //process each counter
 			for (int i = 0; i < NUM_ROWS; i++) {
 				//if this counter is not finished
@@ -164,7 +165,7 @@ struct Tumble: Module {
 						}
                     }
                     currentCounter = i;
-                    break;
+                    break;  // stop processing rows
                 }
             }
         }
@@ -174,8 +175,7 @@ struct Tumble: Module {
 
             // Mode 
             Mode=params[P_MODE_BUTTON].getValue();
-            lights[L_ONCEMODE].setBrightness(!Mode);
-			lights[L_LOOPMODE].setBrightness(Mode);
+
         }
     }
 };
