@@ -1,4 +1,5 @@
 #include "plugin.hpp"
+#include "components.hpp"
 #define MAX_SIG 8
 
 struct Some : Module {
@@ -89,21 +90,22 @@ struct SomeWidget : ModuleWidget {
 	SomeWidget(Some* module) {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/Some.svg")));
-		float lx = 30.48 / 4;
-		float rx = 30.48 - lx;
-		float mx = 30.48 / 2;
+		float lx = 20.32 / 4;
+		float rx = lx + 10;
+		float mx = 20.32 / 2;
+		float yOffset=15;
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(lx, 15)), module, Some::I_TRIG));
-		addParam(createParamCentered<VCVButton>(mm2px(Vec(rx, 15)), module, Some::P_TRIG));
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(lx, yOffset)), module, Some::I_TRIG));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(lx + 3.5, yOffset - 3.5)), module, Some::P_TRIG));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(lx, 30)), module, Some::I_PROB));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(rx, 30)), module, Some::P_PROB));
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(lx, 30)), module, Some::I_PROB));
+		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(rx, 30)), module, Some::P_PROB));
 
-		for(int i = 0; i < MAX_SIG; i++) {
-			float y = 42 + 10 * i;
-			addInput(createInputCentered<PJ301MPort>(mm2px(Vec(lx, y)), module, Some::I_V + i));
-			addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(rx, y)), module, Some::O_V + i));
-			addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(mx, y)), module, Some::L_LED + i));
+		for(int i=0; i<MAX_SIG; i++){
+			float y=112-((7-i)*10);
+			addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(lx, y)), module, Some::I_V + i ));
+			addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(lx+10, y)), module, Some::O_V + i ));
+			addChild(createLightCentered<SmallLight<GreenLight>>(mm2px(Vec(lx+5, y)), module, Some::L_LED + i));
 		}
 	}
 };
