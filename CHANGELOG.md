@@ -12,12 +12,21 @@
     * A chain of up to 8 countdowns, which can produce bursts of triggers or gates.
   * Added module Set
   * Added module Fork
-  * Update module Some
+  * Updated module Some
     * Bug Fixes
     * Cosmetic changes
-  * Update module Together
+  * Updated module Together
     * Fixed bug with random
     * Added Scale and Offset for each group
     * Exnad range of dividers to 64.
     * Change mode to a switch
+    * Cosmetic changes
+  * Updated module Between
+    * Cosmetic changes
+    * Changes input calulation to source+offset*scale
+  * Updated Travel
+    * Cosmetic changes
+    * Move option from context menu to front panel
+    * Changed input calulation to source+offset*scale
+  * Updated module HiLo
     * Cosmetic changes
