@@ -24,7 +24,7 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="1.5522653"
-     inkscape:cx="-4.1874285"
+     inkscape:cx="-3.8653186"
      inkscape:cy="-46.061714"
      inkscape:window-width="1280"
      inkscape:window-height="674"
@@ -69,7 +69,8 @@
     <g
        aria-label="HiLo"
        id="text3032"
-       style="font-weight:bold;font-size:2.82222px;line-height:1.25;font-family:Futura;-inkscape-font-specification:'Futura Bold';stroke-width:0.264583">
+       style="font-weight:bold;font-size:2.82222px;line-height:1.25;font-family:Futura;-inkscape-font-specification:'Futura Bold';stroke-width:0.264583"
+       transform="translate(0,0.56)">
       <path
          d="M 4.9996785,2.9849548 H 5.7983668 V 2.1636887 h 0.5531551 v 2.127954 H 5.7983668 V 3.4139322 H 4.9996785 V 4.2916427 H 4.4465233 v -2.127954 h 0.5531552 z"
          id="path5720" />
