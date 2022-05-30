@@ -16,5 +16,8 @@
     * Bug Fixes
     * Cosmetic changes
   * Update module Together
-    * Bug fixes
+    * Fixed bug with random
+    * Added Scale and Offset for each group
+    * Exnad range of dividers to 64.
+    * Change mode to a switch
     * Cosmetic changes

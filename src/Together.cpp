@@ -53,8 +53,6 @@ struct Together : Module {
 		ENUMS(L_STEPACTIVE,NUM_ROWS),
 		ENUMS(L_TRIGHEADS,NUM_ROWS),
 		ENUMS(L_TRIGTAILS,NUM_ROWS),
-		L_RNDMODE,
-		L_NUDGEMODE,
 		LIGHTS_LEN
 	};
 
@@ -70,7 +68,6 @@ struct Together : Module {
 	dsp::BooleanTrigger divNudgeButton;
 	dsp::BooleanTrigger divLockButton[NUM_ROWS];
 	dsp::BooleanTrigger nudgeButton;
-	dsp::BooleanTrigger nudgemodeButton;
 	
 	dsp::SchmittTrigger nudgeTrigger;
 	dsp::SchmittTrigger clockTrigger;
@@ -89,7 +86,6 @@ struct Together : Module {
 	bool pulse;
 	float range=1.f;
 	float nudgev=0.05f;
-	bool modeToggleReady=true;
 	int nudgeMode = RANDOM;
 
 	Together() {
@@ -115,7 +111,7 @@ struct Together : Module {
 		configInput(I_NUDGE, "Nudge Trig");
 		configButton(P_NUDGE_BUTTON,"Manual Nudge");
 		configParam(P_NUDGEV, 0.f, 1.f, 0.05f, "Nudge Amount");
-		configButton(P_nudgeMode,"Nudge/RND Mode");
+		configSwitch(P_nudgeMode,0,1,0,"Mode",{"Nudge","Random"});
 
 		//scale and offset
 		configParam(P_SCALE, -5, 5, 1.f, "Scale");
@@ -134,12 +130,12 @@ struct Together : Module {
 		configOutput(O_ORGATE, "Global out gate");
 
 		lowPriority.division=4;
-		lights[L_NUDGEMODE].setBrightness(0);
-		lights[L_RNDMODE].setBrightness(1);
 	}
 
 	float nudge(float currentValue, float rndAmmount, float nudgeAmmount, float lo, float hi, int mode) {
 		float newValue;
+		DEBUG("Nedge mode : %d",nudgeMode);
+		DEBUG("Param : %d",params[P_RNUDGE_BUTTON].getValue());
 		if(nudgeMode==NUDGE) {
 			float v=(random::uniform()>0.5) ? currentValue - nudgeAmmount : currentValue + nudgeAmmount;
 			newValue=clamp(v,lo,hi);
@@ -173,7 +169,7 @@ struct Together : Module {
 					//not the locked steps
 					if(!params[P_DIVLOCK + row].getValue()) {
 						float currentValue=params[P_DIVS + row].getValue();
-						params[P_DIVS + row].setValue(int(nudge(currentValue,16,1,0,16,nudgeMode)));
+						params[P_DIVS + row].setValue(int(nudge(currentValue,64,1,0,64,nudgeMode)));
 					}
 				}
 			}
@@ -212,20 +208,7 @@ struct Together : Module {
 
 
 			// Mode toggle
-			if ( modeToggleReady && nudgemodeButton.process(params[P_nudgeMode].getValue())) {
-				if(nudgeMode==NUDGE) {
-					nudgeMode=RANDOM;
-					lights[L_NUDGEMODE].setBrightness(0);
-					lights[L_RNDMODE].setBrightness(1);
-				} else {
-					nudgeMode=NUDGE;
-					lights[L_RNDMODE].setBrightness(0);
-					lights[L_NUDGEMODE].setBrightness(1);
-				}
-				modeToggleReady=false;
-			} else {
-				modeToggleReady=true;
-			}
+			nudgeMode=params[P_nudgeMode].getValue();
 
 			// nudge
 			if (nudgeButton.process(params[P_NUDGE_BUTTON].getValue()) | nudgeTrigger.process(inputs[I_NUDGE].getVoltage(), 0.1f, 2.f)) {
@@ -260,7 +243,7 @@ struct Together : Module {
 					lights[L_STEPACTIVE + i].setBrightness(0);
 				} else {
 					cycleResult[i] = ((seqCount % v)==0) ? true : false;
-					lights[L_STEPACTIVE +i].setBrightness(1);
+					lights[L_STEPACTIVE + i].setBrightness(1);
 				}
 			}
 
@@ -340,24 +323,24 @@ struct TogetherWidget : ModuleWidget {
 		for(int i=0; i<NUM_ROWS; i++){
 			x=lx;
 			y=yoff+(i*s);
-			addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(x, y)), module, Together::P_DIVS + i));
+			addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y)), module, Together::P_DIVS + i));
 			addParam(createParamCentered<CoffeeTinyButtonLatch>(mm2px(Vec(x-4, y-4)), module, Together::P_DIVLOCK + i ));
 			addChild(createLightCentered<CoffeeTinySimpleLight<OrangeLight>>(mm2px(Vec(x-4, y-4)), module, Together::L_STEPLOCK + i));
 			x=5+lx+(s*1);
-			addParam(createParamCentered<Trimpot>(mm2px(Vec(x, y)), module, Together::P_G1 + i));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Together::P_G1 + i));
 			x=5+lx+(s*2);
-			addParam(createParamCentered<Trimpot>(mm2px(Vec(x, y)), module, Together::P_G2 + i));		
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Together::P_G2 + i));		
 			x=5+lx+(s*3);
-			addParam(createParamCentered<Trimpot>(mm2px(Vec(x, y)), module, Together::P_G3 + i));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Together::P_G3 + i));
 			x=5+lx+(s*4);
-			addParam(createParamCentered<Trimpot>(mm2px(Vec(x, y)), module, Together::P_G4 + i));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Together::P_G4 + i));
 
 			x=5+lx+(s*5);
 			addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y)), module, Together::I_RowNudgeTrig + i));
 			addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x+3.5, y-3.5)), module, Together::P_RNUDGE_BUTTON + i ));
 
 			x=5+lx+(s*6);
-			addParam(createParamCentered<Trimpot>(mm2px(Vec(x, y)), module, Together::P_RTRIGPROB + i));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Together::P_RTRIGPROB + i));
 			addChild(createLightCentered<TinyLight<RedLight>>(mm2px(Vec(x-3, y+3.5)), module, Together::L_TRIGTAILS + i));
 			addChild(createLightCentered<TinyLight<GreenLight>>(mm2px(Vec(x+3, y+3.5)), module, Together::L_TRIGHEADS + i));
 
@@ -381,9 +364,9 @@ struct TogetherWidget : ModuleWidget {
 		//nudge vs rnd switch
 		y=16;
 		x=lx+7.5;
-		addParam(createParamCentered<CoffeeButtonVertIndicator>(mm2px(Vec(x, y)), module, Together::P_nudgeMode));
-		addChild(createLightCentered<TinyLight<OrangeLight>>(mm2px(Vec(x, y)), module, Together::L_NUDGEMODE));
-		addChild(createLightCentered<TinyLight<OrangeLight>>(mm2px(Vec(x, y+2)), module, Together::L_RNDMODE));
+		addParam(createParamCentered<CoffeeSwitch2PosVert>(mm2px(Vec(x, y)), module, Together::P_nudgeMode));
+		//addChild(createLightCentered<TinyLight<OrangeLight>>(mm2px(Vec(x, y)), module, Together::L_NUDGEMODE));
+		//addChild(createLightCentered<TinyLight<OrangeLight>>(mm2px(Vec(x, y+2)), module, Together::L_RNDMODE));
 
 
 		// group inputs
@@ -400,7 +383,7 @@ struct TogetherWidget : ModuleWidget {
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y)), module, Together::I_NUDGE));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x+3.5, y-3.5)), module, Together::P_NUDGE_BUTTON));
 		x=lx+(s*5)+s+5;		
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(x, y)), module, Together::P_NUDGEV));
+		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Together::P_NUDGEV));
 
 		// group outputs
 		for(int i=0; i<NUM_GROUPS; i++){
@@ -413,8 +396,8 @@ struct TogetherWidget : ModuleWidget {
 		//scale and offset
 		x=lx;
 		y=112;
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(x-3, y-3)), module, Together::P_SCALE));		
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(x+3, y+3)), module, Together::P_OFFSET));		
+		addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x-3, y-3)), module, Together::P_SCALE));		
+		addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x+3, y+3)), module, Together::P_OFFSET));		
 
 		//global or trig and gate
 		y=112;
