@@ -71,7 +71,7 @@ struct Tumble: Module {
         configInput(I_START, "Stat Trig");
         configSwitch(P_MODE_BUTTON,0,1,0,"Once/Loop Mode",{"Once","Loop"});
         for (int i = 0; i < NUM_ROWS; i++) {
-            configParam(P_COUNTER + i, 0.f, 16.f, 0.f, string::f("Counter %d", i + 1));
+            configParam(P_COUNTER + i, 0.f, 64.f, 0.f, string::f("Counter %d", i + 1));
             paramQuantities[P_COUNTER + i] -> snapEnabled = true;
             configOutput(O_TRIG + i, string::f("Trigger %d", i + 1));
             configOutput(O_GATE + i, string::f("Gate %d", i + 1));
