@@ -1,97 +1,104 @@
 #include "plugin.hpp"
 
-struct Between : Module {
-	enum ParamId {
-		P_TRIG,
-		P_CV1,
-		P_CV2,
-		P_OFFSET1,
-		P_OFFSET2,
-		PARAMS_LEN
-	};
-	enum InputId {
-		I_TRIG,
-		I_CV1,
-		I_CV2,
-		INPUTS_LEN
-	};
-	enum OutputId {
-		O_CV1,
-		OUTPUTS_LEN
-	};
-	enum LightId {
-		LIGHTS_LEN
-	};
-	
-	float lastMaxCV = 0.f;
-	float lastMinCV = 10.f;
-	float hold = 0.f;
+#include "components.hpp"
 
-	dsp::SchmittTrigger clockTrigger;
-	dsp::BooleanTrigger buttonTrigger;
+struct Between: Module {
+    enum ParamId {
+        P_TRIG,
+        P_SCALE_A,
+        P_SCALE_B,
+        P_OFFSET_A,
+        P_OFFSET_B,
+        PARAMS_LEN
+    };
+    enum InputId {
+        I_TRIG,
+        I_CV_A,
+        I_CV_B,
+        INPUTS_LEN
+    };
+    enum OutputId {
+        O_CV,
+        OUTPUTS_LEN
+    };
+    enum LightId {
+        LIGHTS_LEN
+    };
 
-	Between() {
-		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configButton(P_TRIG, "Trigger");
-		configParam(P_CV1, -5.f, 5.f, 0.f, "CV1");
-		configParam(P_CV2, -5.f, 5.f, 0.f, "CV2");		
-		configParam(P_OFFSET1, -5.f, 5.f, 0.f, "Offset1");
-		configParam(P_OFFSET2, -5.f, 5.f, 0.f, "Offset2");
-		configInput(I_TRIG, "Trigger");
-		configInput(I_CV1, "CV1");
-		configInput(I_CV2, "CV2");
-		configOutput(O_CV1, "Out");
-	}
+    float lastMaxCV = 0.f;
+    float lastMinCV = 10.f;
+    float hold = 0.f;
 
-	void process(const ProcessArgs& args) override {
-		// no output, no point
-		if(!outputs[O_CV1].isConnected()) { return; }
+    dsp::SchmittTrigger _clockTrigger;
+    dsp::BooleanTrigger _buttonTrigger;
 
-		float CV1 = params[P_CV1].getValue();
-		if(inputs[I_CV1].isConnected()){
-			CV1=inputs[I_CV1].getVoltage();
-		}
+    Between() {
+        config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+        configButton(P_TRIG, "Trigger");
+        configParam(P_SCALE_A, -5.f, 5.f, 1.f, "Scale A");
+        configParam(P_SCALE_B, -5.f, 5.f, 1.f, "Scale B");
+        configParam(P_OFFSET_A, -5.f, 5.f, 0.f, "Offset A");
+        configParam(P_OFFSET_B, -5.f, 5.f, 0.f, "Offset B");
+        configInput(I_TRIG, "Trigger");
+        configInput(I_CV_A, "CV1");
+        configInput(I_CV_B, "CV2");
+        configOutput(O_CV, "Out");
+    }
 
-		float CV2 = params[P_CV2].getValue();
-		if(inputs[I_CV2].isConnected()){
-			CV2=inputs[I_CV2].getVoltage();
-		}
+    void process(const ProcessArgs & args) override {
+        // no output, no point
+        if (!outputs[O_CV].isConnected()) {
+            return;
+        }
 
-		float b_trigger=params[P_TRIG].getValue();
-		float i_trigger=inputs[I_TRIG].getVoltage();
-		if( (clockTrigger.process(i_trigger) | buttonTrigger.process(b_trigger))){
-			CV1+=params[P_OFFSET1].getValue();
-			CV2+=params[P_OFFSET2].getValue();
-			if(CV1<CV2) {
-				hold = ((CV1-CV2) * random::uniform()) + CV2;
-			} else {
-				hold = ((CV2-CV1) * random::uniform()) + CV1;
-			}
-		} 
-		
-		outputs[O_CV1].setVoltage(hold);
+        float b_trigger = params[P_TRIG].getValue();
+        float i_trigger = inputs[I_TRIG].getVoltage();
+        if ((_clockTrigger.process(i_trigger) || _buttonTrigger.process(b_trigger))) {
+            float CV1 = 0;
+            float CV2 = 0;
 
-	}
+            if (inputs[I_CV_A].isConnected())
+                CV1 += inputs[I_CV_A].getVoltage();
+            CV1 += params[P_OFFSET_A].getValue();
+            CV1 *= params[P_SCALE_A].getValue();
+
+            if (inputs[I_CV_B].isConnected())
+                CV2 += inputs[I_CV_B].getVoltage();
+            CV2 += params[P_OFFSET_B].getValue();
+            CV2 *= params[P_SCALE_B].getValue();
+
+            if (CV1 < CV2) {
+                hold = ((CV1 - CV2) * random::uniform()) + CV2;
+            } else {
+                hold = ((CV2 - CV1) * random::uniform()) + CV1;
+            }
+        }
+
+        outputs[O_CV].setVoltage(hold);
+
+    }
 };
 
-struct BetweenWidget : ModuleWidget {
-	BetweenWidget(Between* module) {
-		setModule(module);
-		setPanel(createPanel(asset::plugin(pluginInstance, "res/Between.svg")));
-	
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 15)), module, Between::I_TRIG));
-		addParam(createParamCentered<VCVButton>(mm2px(Vec(7.62, 25)), module, Between::P_TRIG));
+struct BetweenWidget: ModuleWidget {
+    BetweenWidget(Between * module) {
+        setModule(module);
+        setPanel(createPanel(asset::plugin(pluginInstance, "res/Between.svg")));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 42)), module, Between::I_CV1));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(7.62, 52)), module, Between::P_CV1));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(7.62, 62)), module, Between::P_OFFSET1));
+        float x = 7.62;
+        float y = 15;
+        addInput(createInputCentered < CoffeeInputPortButton > (mm2px(Vec(x, y)), module, Between::I_TRIG));
+        addParam(createParamCentered < CoffeeTinyButton > (mm2px(Vec(x + 3.5, y - 3.5)), module, Between::P_TRIG));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 78)), module, Between::I_CV2));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(7.62, 88)), module, Between::P_CV2));
-		addParam(createParamCentered<Trimpot>(mm2px(Vec(7.62, 98)), module, Between::P_OFFSET2));
+        addInput(createInputCentered < CoffeeInputPort > (mm2px(Vec(x, 35)), module, Between::I_CV_A));
+        addParam(createParamCentered < CoffeeKnob6mm > (mm2px(Vec(x, 45)), module, Between::P_OFFSET_A));
+        addParam(createParamCentered < CoffeeKnob6mm > (mm2px(Vec(x, 55)), module, Between::P_SCALE_A));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 112)), module, Between::O_CV1));
-	}
+        addInput(createInputCentered < CoffeeInputPort > (mm2px(Vec(x, 75)), module, Between::I_CV_B));
+        addParam(createParamCentered < CoffeeKnob6mm > (mm2px(Vec(x, 85)), module, Between::P_OFFSET_B));
+        addParam(createParamCentered < CoffeeKnob6mm > (mm2px(Vec(x, 95)), module, Between::P_SCALE_B));
+
+        addOutput(createOutputCentered < CoffeeOutputPort > (mm2px(Vec(x, 112)), module, Between::O_CV));
+    }
 };
 
-Model* modelBetween = createModel<Between, BetweenWidget>("Between");
+Model * modelBetween = createModel < Between, BetweenWidget > ("Between");
