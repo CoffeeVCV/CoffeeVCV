@@ -2,13 +2,13 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="2mm"
-   height="2mm"
-   viewBox="0 0 2 2"
+   width="3mm"
+   height="2.9999998mm"
+   viewBox="0 0 3 2.9999998"
    version="1.1"
    id="svg5"
    inkscape:version="1.1.2 (b8e25be8, 2022-02-05)"
-   sodipodi:docname="CoffeeTinyButton1.svg"
+   sodipodi:docname="Coffee3mmButton2.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -23,15 +23,19 @@
      inkscape:pagecheckerboard="1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="10.340422"
-     inkscape:cx="-1.305556"
-     inkscape:cy="-5.6574094"
+     inkscape:zoom="4.925435"
+     inkscape:cx="14.110429"
+     inkscape:cy="24.058789"
      inkscape:window-width="1280"
      inkscape:window-height="674"
      inkscape:window-x="0"
      inkscape:window-y="25"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="layer1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
   <defs
      id="defs2" />
   <g
@@ -39,11 +43,11 @@
      inkscape:groupmode="layer"
      id="layer1">
     <ellipse
-       style="fill:#603601;fill-opacity:1;stroke:#1c0a00;stroke-width:0.0952378;stroke-opacity:1;stop-color:#000000"
+       style="fill:#1c0a00;fill-opacity:1;stroke:#1c0a00;stroke-width:0.142857;stroke-opacity:1;stop-color:#000000"
        id="path926"
-       cx="1"
-       cy="1"
-       rx="0.95238101"
-       ry="0.95238113" />
+       cx="1.5"
+       cy="1.4999995"
+       rx="1.4285715"
+       ry="1.4285713" />
   </g>
 </svg>
