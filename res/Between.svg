@@ -25,9 +25,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="4.6036729"
-     inkscape:cx="27.152233"
-     inkscape:cy="433.24103"
+     inkscape:zoom="3.1073732"
+     inkscape:cx="5.1490436"
+     inkscape:cy="52.61679"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -62,6 +62,10 @@
        position="17.471559,134.70702"
        orientation="0,-1"
        id="guide62724" />
+    <sodipodi:guide
+       position="10.43059,123.73891"
+       orientation="0,-1"
+       id="guide8423" />
   </sodipodi:namedview>
   <metadata
      id="metadata5">
@@ -113,7 +117,8 @@
     <g
        aria-label="Between"
        id="text105688"
-       style="font-weight:500;font-size:2.82223px;line-height:1.25;font-family:Futura;-inkscape-font-specification:'Futura Medium';fill:#1c0a00;stroke-width:0.264583">
+       style="font-weight:500;font-size:2.82223px;line-height:1.25;font-family:Futura;-inkscape-font-specification:'Futura Medium';fill:#1c0a00;stroke-width:0.264583"
+       transform="translate(0,0.56)">
       <path
          d="M 1.7701571,172.19897 H 1.891513 q 0.208845,0 0.2991564,-0.0536 0.090311,-0.0536 0.090311,-0.17215 0,-0.11854 -0.090311,-0.17216 -0.090311,-0.0536 -0.2991564,-0.0536 H 1.7701571 Z m 0,-0.86361 h 0.1016003 q 0.2596452,0 0.2596452,-0.20602 0,-0.20602 -0.2596452,-0.20602 H 1.7701571 Z M 1.217,170.49998 h 0.8240912 q 0.2935119,0 0.4459124,0.14111 0.1524004,0.14112 0.1524004,0.40641 0,0.16086 -0.059267,0.26811 -0.056445,0.10442 -0.1749782,0.1778 0.1185336,0.0226 0.2003783,0.0705 0.084667,0.0452 0.1354671,0.11289 0.053622,0.0677 0.0762,0.1524 0.022578,0.0847 0.022578,0.18063 0,0.14957 -0.053622,0.26529 -0.0508,0.11571 -0.1467559,0.19473 -0.093134,0.079 -0.2286007,0.11853 -0.135467,0.0395 -0.3048008,0.0395 H 1.217 Z"
          style="font-weight:bold;-inkscape-font-specification:'Futura Bold'"
