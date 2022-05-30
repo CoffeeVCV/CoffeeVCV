@@ -10,6 +10,8 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack), an open-source Eurorack
   - [Between](#Between)
   - [HiLo](#HiLo)
   - [Some](#Some)
+  - [Set](#Set)
+  - [Fork](#Fork)
   
 ---
 ## <a name="Tumble"></a> Tumble
@@ -290,3 +292,54 @@ In this example with only 4 connected, Probability is still 0.5, so only 2 input
 
 ![Some Example 2](images/Some-Example2.png)
 
+---
+## <a name="Set"></a> Set
+![Set panel](images/Set-Panel.png)
+
+Set, is a dual utility module, which accepts an CV input, apply an offset, some scaling and outputs the result.
+
+The offset and scaling con be controlled via CV.
+
+### Features
+* Two independant functions, each with :
+  * Input CV
+  * Offest -5V to 5V
+  * CV Offset input
+  * Scaling -x5 to x5
+  * CV Scaling Input
+  * CV Output
+
+In the example below the supply CV is shown in red, and the altered voltage is shown in orange.
+
+![Set Example 1](images/Set-Example1.png)
+
+---
+## <a name="Fork"></a> Fork
+![Fork panel](images/Fork-Panel.png)
+
+Fork is a utility for making random choices.
+
+### Features
+* Two independant function each with :
+  * Input trigger with manual button.
+  * Probabilty control -1 to +1
+    * -1 all A
+    * 0 50/50 chance
+    * +1 all B
+  * CV Probabality Input
+  * 2 x Inputs with indicators.
+  * Output CV 
+
+Provide two inputs A and B, and set the probability.  When triggered the winning input will be sampled and sent to output.
+
+Output value will remain until triggered again.
+
+Triggering acan be via input, or manual.
+
+Probabaility can be via CV or manually set.
+
+An indicator light show which input was successful.
+
+In the example below, a trigger is provided (green), the probability is manually set to 50/50, and the input CV is (oragen and purple) being switch to produce the output shown in blue on the scope.
+
+![Fork Example 1](images/Fork-Example1.png)
