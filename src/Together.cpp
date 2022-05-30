@@ -26,8 +26,8 @@ struct Together : Module {
 		ENUMS(P_DIVLOCK,NUM_ROWS),	
 		ENUMS(P_RTRIGPROB,NUM_ROWS),	
 		P_SNUDGE_BUTTON,
-		P_SCALE,
-		P_OFFSET,	
+		ENUMS(P_SCALE,NUM_GROUPS),
+		ENUMS(P_OFFSET,NUM_GROUPS),		
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -113,14 +113,15 @@ struct Together : Module {
 		configParam(P_NUDGEV, 0.f, 1.f, 0.05f, "Nudge Amount");
 		configSwitch(P_nudgeMode,0,1,0,"Mode",{"Nudge","Random"});
 
-		//scale and offset
-		configParam(P_SCALE, -5, 5, 1.f, "Scale");
-		configParam(P_OFFSET, -5, 5, 0.f, "Offset");
+
 		// the groups
 		for(int i=0;i<NUM_GROUPS;i++){
-			configInput(I_GROUPNUDGETRIG + i,string::f("Grp %d Rand Trig", i + 1));
-			configOutput(O_G + i, string::f("Out Grp %d", i + 1));
+			configInput(I_GROUPNUDGETRIG + i,string::f("Group %d Rand Trig", i + 1));
+			configOutput(O_G + i, string::f("Out Group %d", i + 1));
 			configButton(P_GNUDGE_BUTTON + i,string::f("Group %d Rand", i + 1));
+			//scale and offset
+			configParam(P_SCALE+i, -5, 5, 1.f, string::f("Group %d Scale", i + 1));
+			configParam(P_OFFSET+i, -5, 5, 0.f, string::f("Group %d Offset", i + 1),"v");
 		}
 		configButton(P_SNUDGE_BUTTON,"Randomize Dividers");
 		configInput(I_DIVTRIG, "Step CV");
@@ -134,8 +135,6 @@ struct Together : Module {
 
 	float nudge(float currentValue, float rndAmmount, float nudgeAmmount, float lo, float hi, int mode) {
 		float newValue;
-		DEBUG("Nedge mode : %d",nudgeMode);
-		DEBUG("Param : %d",params[P_RNUDGE_BUTTON].getValue());
 		if(nudgeMode==NUDGE) {
 			float v=(random::uniform()>0.5) ? currentValue - nudgeAmmount : currentValue + nudgeAmmount;
 			newValue=clamp(v,lo,hi);
@@ -294,8 +293,8 @@ struct Together : Module {
 			//set resulting value
 			for( int i=0; i<NUM_GROUPS; i++) {
 				//apply scale and offset
-				v=groupValue[i]*params[P_SCALE].getValue();
-				v+=params[P_OFFSET].getValue();
+				v=groupValue[i]*params[P_SCALE+i].getValue();
+				v+=params[P_OFFSET+1].getValue();
 				outputs[O_G + i].setVoltage(v);
 			}
 		}
@@ -385,19 +384,18 @@ struct TogetherWidget : ModuleWidget {
 		x=lx+(s*5)+s+5;		
 		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Together::P_NUDGEV));
 
-		// group outputs
+		// group outputs, scale and offset
 		for(int i=0; i<NUM_GROUPS; i++){
-			y=yoff+(s*NUM_ROWS);
 			y=112;
 			x=lx+(s*i)+s+5;
 			addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Together::O_G + i));
+			addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x-2, y-s)), module, Together::P_OFFSET +i));		
+			addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x+2, y-s+3)), module, Together::P_SCALE +i));		
 		}
 
 		//scale and offset
 		x=lx;
 		y=112;
-		addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x-3, y-3)), module, Together::P_SCALE));		
-		addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x+3, y+3)), module, Together::P_OFFSET));		
 
 		//global or trig and gate
 		y=112;

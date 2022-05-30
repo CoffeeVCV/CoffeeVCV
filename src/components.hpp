@@ -3,6 +3,35 @@
 
 using namespace rack;
 
+struct CoffeeSwitch2PosHori : app::SvgSwitch {
+	CoffeeSwitch2PosHori() {
+		shadow->opacity = 0.0;
+		momentary=false;
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch2PosHori1.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch2PosHori2.svg")));
+	}
+};
+
+struct CoffeeSwitch3PosHori : app::SvgSwitch {
+	CoffeeSwitch3PosHori() {
+		shadow->opacity = 0.0;
+		momentary=false;
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosHori1.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosHori2.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosHori3.svg")));
+	}
+};
+
+struct CoffeeSwitch3PosVert : app::SvgSwitch {
+	CoffeeSwitch3PosVert() {
+		shadow->opacity = 0.0;
+		momentary=false;
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosVert1.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosVert2.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosVert3.svg")));
+	}
+};
+
 struct CoffeeSwitch2PosVert : app::SvgSwitch {
 	CoffeeSwitch2PosVert() {
 		shadow->opacity = 0.0;
