@@ -77,10 +77,10 @@ struct SetWidget: ModuleWidget {
             float y = yOffset + (gs * i);
             addInput(createInputCentered < CoffeeInputPort > (mm2px(Vec(x, y)), module, Set::I_CV + i));
             addInput(createInputCentered < CoffeeInputPort > (mm2px(Vec(x, y + s)), module, Set::I_OFFSET + i));
-            addParam(createParamCentered < Trimpot > (mm2px(Vec(x, y + s + s - 2)), module, Set::P_OFFSET + i));
+            addParam(createParamCentered < CoffeeKnob6mm > (mm2px(Vec(x, y + s + s - 2)), module, Set::P_OFFSET + i));
             y = yOffset + (gs * i) + s + s - 2 + s;
             addInput(createInputCentered < CoffeeInputPort > (mm2px(Vec(x, y)), module, Set::I_SCALE + i));
-            addParam(createParamCentered < Trimpot > (mm2px(Vec(x, y + s - 2)), module, Set::P_SCALE + i));
+            addParam(createParamCentered < CoffeeKnob6mm > (mm2px(Vec(x, y + s - 2)), module, Set::P_SCALE + i));
             addOutput(createOutputCentered < CoffeeOutputPort > (mm2px(Vec(x, y + s + s - 2)), module, Set::O_CV + i));
         }
     }

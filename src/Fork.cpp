@@ -94,7 +94,7 @@ struct ForkWidget: ModuleWidget {
             addParam(createParamCentered < CoffeeTinyButton > (mm2px(Vec(x + 3.5, y - 3.5)), module, Fork::P_TRIG_BUTTON + i));
 
             addInput(createInputCentered < CoffeeInputPort > (mm2px(Vec(x, y + s)), module, Fork::I_PROB + i));
-            addParam(createParamCentered < Trimpot > (mm2px(Vec(x, y + s + s - 2)), module, Fork::P_PROB + i));
+            addParam(createParamCentered < CoffeeKnob6mm > (mm2px(Vec(x, y + s + s - 2)), module, Fork::P_PROB + i));
 
             y = yOffset + (gOffset * i) + s - 4;
             addInput(createInputCentered < CoffeeInputPortIndicator > (mm2px(Vec(x, y + (s * 2))), module, Fork::I_TOP + i));
