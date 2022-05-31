@@ -74,6 +74,12 @@
       "name": "Some2",
       "description": "On trigger, based on a CV input, between 0-n input is passed to outputs.",
       "tags": ["Utility", "Random", "Logic"]
+    },
+    {
+      "slug": "Tap",
+      "name": "Tap",
+      "description": "Three push buttons to control tree triggers and gates.",
+      "tags": ["Utility"]
     }
   ]
 }
