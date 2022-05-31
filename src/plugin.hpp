@@ -17,3 +17,4 @@ extern Model* modelTogether;
 extern Model* modelTumble;
 extern Model* modelFork;
 extern Model* modelSet;
+extern Model* modelSome2;

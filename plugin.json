@@ -68,6 +68,12 @@
       "tags": [
         "Utility","Logic","Random","Sample and hold"
       ]
+    },
+    {
+      "slug": "Some2",
+      "name": "Some2",
+      "description": "On trigger, based on a CV input, between 0-n input is passed to outputs.",
+      "tags": ["Utility", "Random", "Logic"]
     }
   ]
 }
