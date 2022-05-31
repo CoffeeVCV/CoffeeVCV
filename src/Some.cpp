@@ -92,7 +92,6 @@ struct SomeWidget : ModuleWidget {
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/Some.svg")));
 		float lx = 20.32 / 4;
 		float rx = lx + 10;
-		float mx = 20.32 / 2;
 		float yOffset=15;
 
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(lx, yOffset)), module, Some::I_TRIG));
