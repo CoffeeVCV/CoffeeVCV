@@ -28,8 +28,8 @@ struct Set: Module {
     Set() {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
         for (int i = 0; i < NUM_GROUPS; i++) {
-            configParam(P_SCALE + i, -5.f, 5.f, 1.f, string::f("Scale %d", i + 1));
-            configParam(P_OFFSET + i, -5.f, 5.f, 0.f, string::f("Offset %d", i + 1));
+            configParam(P_SCALE + i, -10.f, 10.f, 1.f, string::f("Scale %d", i + 1));
+            configParam(P_OFFSET + i, -10.f, 10.f, 0.f, string::f("Offset %d", i + 1));
             configInput(I_SCALE + i, string::f("Scale %d CV", i + 1));
             configInput(I_OFFSET + i, string::f("Offset %d CV", i + 1));
             configInput(I_CV + i, string::f("Input %d", i + 1));
