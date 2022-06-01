@@ -7,8 +7,8 @@ struct CoffeeSwitch2PosHori : app::SvgSwitch {
 	CoffeeSwitch2PosHori() {
 		shadow->opacity = 0.0;
 		momentary=false;
-		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch2PosHori1.svg")));
-		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch2PosHori2.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSwitch2PosHori1.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSwitch2PosHori2.svg")));
 	}
 };
 
@@ -16,9 +16,9 @@ struct CoffeeSwitch3PosHori : app::SvgSwitch {
 	CoffeeSwitch3PosHori() {
 		shadow->opacity = 0.0;
 		momentary=false;
-		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosHori1.svg")));
-		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosHori2.svg")));
-		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosHori3.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSwitch3PosHori1.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSwitch3PosHori2.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSwitch3PosHori3.svg")));
 	}
 };
 
@@ -26,9 +26,9 @@ struct CoffeeSwitch3PosVert : app::SvgSwitch {
 	CoffeeSwitch3PosVert() {
 		shadow->opacity = 0.0;
 		momentary=false;
-		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosVert1.svg")));
-		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosVert2.svg")));
-		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch3PosVert3.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSwitch3PosVert1.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSwitch3PosVert2.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSwitch3PosVert3.svg")));
 	}
 };
 
@@ -36,16 +36,16 @@ struct CoffeeSwitch2PosVert : app::SvgSwitch {
 	CoffeeSwitch2PosVert() {
 		shadow->opacity = 0.0;
 		momentary=false;
-		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch2PosVert1.svg")));
-		addFrame(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSwitch2PosVert2.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSwitch2PosVert1.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSwitch2PosVert2.svg")));
 	}
 };
 
 
 struct CoffeeSlider : app::SvgSlider {
 	CoffeeSlider() {
-		setBackgroundSvg(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSlider.svg")));
-		setHandleSvg(Svg::load(asset::plugin(pluginInstance,"res/Components/CoffeeSliderHandle.svg")));
+		setBackgroundSvg(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSlider.svg")));
+		setHandleSvg(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeSliderHandle.svg")));
 		setHandlePosCentered(
 			math::Vec(19.84260/2, 76.53517 - 11.74218/2),
 			math::Vec(19.84260/2, 0.0 + 11.74218/2)
