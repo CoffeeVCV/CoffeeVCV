@@ -1,7 +1,7 @@
 {
   "slug": "Coffee",
   "name": "Coffee",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "license": "GPL-3.0-or-later",
   "brand": "Coffee",
   "author": "CoffeeVCV",
@@ -68,6 +68,18 @@
       "tags": [
         "Utility","Logic","Random","Sample and hold"
       ]
+    },
+    {
+      "slug": "Some2",
+      "name": "Some2",
+      "description": "On trigger, based on a CV input, between 0-n input is passed to outputs.",
+      "tags": ["Utility", "Random", "Logic"]
+    },
+    {
+      "slug": "Tap",
+      "name": "Tap",
+      "description": "Three push buttons to control tree triggers and gates.",
+      "tags": ["Utility"]
     }
   ]
 }

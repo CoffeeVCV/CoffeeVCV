@@ -144,6 +144,23 @@ struct Coffee4mmButton : app::SvgSwitch {
 	}
 };
 
+struct Coffee5mmButton : app::SvgSwitch {
+	Coffee5mmButton() {
+		momentary = true;
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/Coffee5mmButton1.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/Coffee5mmButton2.svg")));
+	}
+};
+
+struct CoffeeInputButton5mm : app::SvgSwitch {
+	CoffeeInputButton5mm() {
+		momentary = true;
+		shadow->opacity=0;
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeInputButton5mm1.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance,"res/components/CoffeeInputButton5mm2.svg")));
+	}
+};
+
 struct CoffeeButtonVertIndicator : app::SvgSwitch {
 	CoffeeButtonVertIndicator() {
 		momentary = true;
