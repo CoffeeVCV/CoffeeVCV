@@ -70,4 +70,4 @@ struct TapWidget : ModuleWidget {
 };
 
 
-Model* modelTap = createModel<Tap, TapWidget>("tap");
+Model* modelTap = createModel<Tap, TapWidget>("Tap");
