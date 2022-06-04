@@ -19,3 +19,4 @@ extern Model* modelFork;
 extern Model* modelSet;
 extern Model* modelSome2;
 extern Model* modelTap;
+extern Model* modelLiken;

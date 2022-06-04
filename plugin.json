@@ -17,32 +17,49 @@
       "slug": "Between",
       "name": "Between",
       "description": "On trigger, out puts a random CV value between two values.",
-      "tags": ["Utility","Random","Sample and hold"]
+      "tags": [
+        "Utility",
+        "Random",
+        "Sample and hold"
+      ]
     },
     {
       "slug": "Travel",
       "name": "Travel",
       "description": "On trigger, take two samples and interpolate an output",
-      "tags": ["Utility","Slew Limiter","Sample and hold"]
+      "tags": [
+        "Utility",
+        "Slew Limiter",
+        "Sample and hold"
+      ]
     },
     {
       "slug": "HiLo",
       "name": "HiLo",
       "description": "Given one or two inputs, output the maximum and minimum voltage.",
-      "tags": ["Utility"]
+      "tags": [
+        "Utility"
+      ]
     },
     {
       "slug": "Some",
       "name": "Some",
       "description": "From a group of active inputs, when triggered, mute a number of the inputs, based on a probability",
-      "tags": ["Utility","Random"]
+      "tags": [
+        "Utility",
+        "Random"
+      ]
     },
     {
       "slug": "Together",
       "name": "Together",
       "description": "An 8 channel, 4 group sequencer, with triggered randomized movement.",
       "tags": [
-        "Utility","Clock modulator","Logic","Random","Sequencer"
+        "Utility",
+        "Clock modulator",
+        "Logic",
+        "Random",
+        "Sequencer"
       ]
     },
     {
@@ -50,7 +67,10 @@
       "name": "Tumble",
       "description": "A chain of up to 8 pulse countdowns, which can produce bursts of triggers or gates.",
       "tags": [
-        "Utility","Clock modulator","Logic","Sequencer"
+        "Utility",
+        "Clock modulator",
+        "Logic",
+        "Sequencer"
       ]
     },
     {
@@ -58,7 +78,8 @@
       "name": "Set",
       "description": "Dual offset and scaling with CV control.",
       "tags": [
-        "Utility","Dual"
+        "Utility",
+        "Dual"
       ]
     },
     {
@@ -66,20 +87,35 @@
       "name": "Fork",
       "description": "Provide two inputs and a probability/chance, will output one, when triggered.",
       "tags": [
-        "Utility","Logic","Random","Sample and hold"
+        "Utility",
+        "Logic",
+        "Random",
+        "Sample and hold"
       ]
     },
     {
       "slug": "Some2",
       "name": "Some2",
       "description": "On trigger, based on a CV input, between 0-n input is passed to outputs.",
-      "tags": ["Utility", "Random", "Logic"]
+      "tags": [
+        "Utility",
+        "Random",
+        "Logic"
+      ]
     },
     {
       "slug": "Tap",
       "name": "Tap",
       "description": "Three push buttons to control tree triggers and gates.",
-      "tags": ["Utility"]
+      "tags": [
+        "Utility"
+      ]
+    },
+    {
+      "slug": "Liken",
+      "name": "Liken",
+      "description": "",
+      "tags": []
     }
   ]
 }
