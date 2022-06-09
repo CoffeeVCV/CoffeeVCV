@@ -10,14 +10,17 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack), an open-source Eurorack
   - [Between](#Between)
   - [HiLo](#HiLo)
   - [Some](#Some)
+  - [Some 2](#Some2) 
   - [Set](#Set)
+  - [Tap](#Tap)
   - [Fork](#Fork)
   
 ---
 ## <a name="Tumble"></a> Tumble
 ![Tumble panel](images/Tumble-Panel.png)
 
-Tumble, provides chain of up to 8 pulsing countdowns, which can produce bursts of triggers or gates.  This can be used as a sequencer, or a pulse generator.  Pairs well with other logic modules.
+Tumble, provides chain of up to 8 pulsing countdowns, which can produce bursts of triggers or gates.  This can be used as a sequencer, or a pulse generator.
+Tumble pairs well with other logic modules.
 
 ### Features
 * Clock \ Trigger input with manual button
@@ -37,12 +40,13 @@ Tumble, provides chain of up to 8 pulsing countdowns, which can produce bursts o
 2. Set some counters to non zero values.
 3. Press or trigger Start
 
-Once started, on each clock pulse the counters will start to countdown.
+Once started, on each clock pulse the first counter will start to countdown.
 Counters are prioritized, from top to bottom.
-Once a counter reaches zero, the next coundown with start.
-Each time a counter decreases, a pulse is sen to it's trigger and gate, and also the global trigger and gate.
-On the last count of the last couhter, the End Of Cycle trigger will pulse.
-If the mode swicth is set ot Once, antgher start trigger is needed to start again.
+Once a counter reaches zero, the next counter will start to countdown.
+Each time a counter decreases, a pulse is sent to it's trigger and gate, and also the global trigger and gate.
+On the last count of the last counter, the End Of Cycle trigger will pulse.
+If the mode swicth is set ot Once, another start trigger is needed to restart the process.  
+
 If the mode it set to loop, it will start automatically on the next clock pulse.
 
 In the following example there are two counters configured.
@@ -293,10 +297,45 @@ In this example with only 4 connected, Probability is still 0.5, so only 2 input
 ![Some Example 2](images/Some-Example2.png)
 
 ---
+## <a name="Some 2"></a> Some 2
+![Some 2 panel](images/Some2-Panel.png)
+
+The Some2 module is a utility module which can be used to send a single source input to up to 8 randomly selected outputs.
+
+### Features
+* Input Trigger with manual button
+* Source Input CV
+* Select knob
+* Select Input CV (range 0 to 8, 1v per output)
+* Probability knob
+* Probability Input CV 0v to 1v
+* 8 x Outpout CV
+* 8 x Selection indicators
+* 8 x Active indicators
+
+### Operation
+Connect a input source to the the input CV.
+Connect some outputs
+Set the selection knob, and the probability.
+Trigger the function.
+
+Each time it's triggered, a number of the selected outputs will be set to the input CV, and the others will be set to 0v.  If probabilioty is set to 0.5v, then half of the selected outputs will be active, half inactive. 
+If Select is less that 8, then the first n outputs are in scope for selection.
+
+In the follwoing example, the inpout CV is 2v (Green)
+Clock is connected via Blue.
+Select is set to 6v which selects 6 of the 8 outputs, shown by 6 selection indicators.
+
+Probability is set to 0.5v manually using the knob.
+Each time clock trigger, 3 outputs are activated, chossen randomly from the 6 selected.
+
+![Some2 Example 1](images/Some2-Example1.png)
+
+---
 ## <a name="Set"></a> Set
 ![Set panel](images/Set-Panel.png)
 
-Set, is a dual utility module, which accepts an CV input, apply an offset, some scaling and outputs the result.
+Set, is a dual VCA module, which accepts an CV input, applys an offset, some scaling and outputs the result.
 
 The offset and scaling con be controlled via CV.
 
@@ -312,6 +351,24 @@ The offset and scaling con be controlled via CV.
 In the example below the supply CV is shown in red, and the altered voltage is shown in orange.
 
 ![Set Example 1](images/Set-Example1.png)
+
+---
+## <a name="Tap"></a> Tap
+![Tap panel](images/Tap-Panel.png)
+
+Tap, is a simple utility module which provides three manual push buttons which each provide a trigger pule and a gate output.
+
+### Features
+* Three independant functions, each with :
+  * Bush Button
+  * Trigger Output 10v
+  * Gate Output 10v
+
+The gate will be held open as long as the button is activated.
+
+In the example below the button has been pressed a few times, and held for different durations.
+
+![Tap Example 1](images/Tap-Example1.png)
 
 ---
 ## <a name="Fork"></a> Fork
