@@ -17,6 +17,7 @@ void init(Plugin* p) {
 	p->addModel(modelFork);
 	p->addModel(modelSome2);
 	p->addModel(modelTap);
+	p->addModel(modelSome3);
 
 	// Any other plugin initialization may go here.
 	// As an alternative, consider lazy-loading assets and lookup tables when your module is created to reduce startup times of Rack.
