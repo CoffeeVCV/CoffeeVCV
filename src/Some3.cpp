@@ -15,6 +15,7 @@ struct Some3 : Module
 		P_PROB,
 		P_SEED,
 		P_RESETBUTTON,
+		P_SELECTIONVSCALE,
 		PARAMS_LEN
 	};
 	enum InputId
@@ -50,7 +51,8 @@ struct Some3 : Module
 		LENGTH
 	};
 
-	float _selectionScaling=10.f;
+	float _selectionScaling=1.f;
+	float _selectionScales[3]={1.f, 10.f, 16.f};
 	float _lastSeed = -1.f;
 	int _selectionStart = 0;
 	int _selectionEnd = 0;
@@ -75,6 +77,7 @@ struct Some3 : Module
 	Some3()
 	{
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+		configSwitch(P_SELECTIONVSCALE,0.f,2.f,1.f,"Selection voltage scaling",{"0-1v","0-10v","0-16v"});
 		configButton(P_TRIGBUTTON, "Manual Trigger");
 		configButton(P_SHIFTUPBUTTON, "Shift Up");
 		configButton(P_SHIFTDOWNBUTTON, "Shift Down");
@@ -149,6 +152,9 @@ struct Some3 : Module
 		{
 			_prob = params[P_PROB].getValue();
 		}
+
+		// check scaling
+		_selectionScaling = _selectionScales[int(params[P_SELECTIONVSCALE].getValue())];
 
 		// use select start input if connected
 		if (inputs[I_SELECTIONSTART].isConnected())
@@ -307,7 +313,6 @@ struct Some3Widget : ModuleWidget
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/Some3.svg")));
 
 		float width = 20.32;
-		float xOffset = 5;
 		float yOffset = 15;
 		float lx = width / 4;
 		float rx = lx * 3;
@@ -339,8 +344,12 @@ struct Some3Widget : ModuleWidget
 		y += sy;
 		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(lx, y)), module, Some3::P_SELECTIONSTART));
 
+		y += sy -2.5;
+		// selection scaling switch
+		addParam(createParamCentered<CoffeeSwitch3PosHori>(mm2px(Vec(lx, y)), module, Some3::P_SELECTIONVSCALE));
+
 		//selection rang shift up/down
-		y += sy + 2.5;
+		y += 7.5;
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(lx, y)), module, Some3::I_SHIFTUP));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(lx + 3.5, y - 3.5)), module, Some3::P_SHIFTUPBUTTON));
 		y += sy;
@@ -369,19 +378,18 @@ struct Some3Widget : ModuleWidget
 			addChild(createLightCentered<MediumLight<GreenLight> >(mm2px(Vec(rx + 2, y + (i * 4))), module, Some3::L_ACTIVE + i));
 		}
 	}
-	void appendContextMenu(Menu* menu) override {
-		Some3* module = dynamic_cast<Some3*>(this->module);
-		assert(module);
-		menu->addChild(new MenuSeparator());
-		menu->addChild(createSubmenuItem("Selection V Scaling", "", [=](Menu* menu) {
-			Menu* selectionScalingMenu = new Menu();
-			selectionScalingMenu->addChild(createMenuItem("0 - 1v", CHECKMARK(module->_selectionScaling == 1.f), [module]() { module->_selectionScaling = 1.f; }));
-			selectionScalingMenu->addChild(createMenuItem("0 - 5v", CHECKMARK(module->_selectionScaling == 5.f), [module]() { module->_selectionScaling = 5.f; }));
-			selectionScalingMenu->addChild(createMenuItem("0 - 10v", CHECKMARK(module->_selectionScaling == 10.f), [module]() { module->_selectionScaling = 10.f; }));
-			selectionScalingMenu->addChild(createMenuItem("0 - 16v", CHECKMARK(module->_selectionScaling == 16.f), [module]() { module->_selectionScaling = 16.f; }));
-			menu->addChild(selectionScalingMenu);
-		}));
-	};
+	// void appendContextMenu(Menu* menu) override {
+	// 	Some3* module = dynamic_cast<Some3*>(this->module);
+	// 	assert(module);
+	// 	menu->addChild(new MenuSeparator());
+	// 	menu->addChild(createSubmenuItem("Selection V Scaling", "", [=](Menu* menu) {
+	// 		Menu* selectionScalingMenu = new Menu();
+	// 		selectionScalingMenu->addChild(createMenuItem("0 - 1v", CHECKMARK(module->_selectionScaling == 1.f), [module]() { module->_selectionScaling = 1.f; }));
+	// 		selectionScalingMenu->addChild(createMenuItem("0 - 10v", CHECKMARK(module->_selectionScaling == 10.f), [module]() { module->_selectionScaling = 10.f; }));
+	// 		selectionScalingMenu->addChild(createMenuItem("0 - 16v", CHECKMARK(module->_selectionScaling == 16.f), [module]() { module->_selectionScaling = 16.f; }));
+	// 		menu->addChild(selectionScalingMenu);
+	// 	}));
+	// };
 };
 
 Model *modelSome3 = createModel<Some3, Some3Widget>("Some3");
