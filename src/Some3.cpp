@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 #include "components.hpp"
+#include "prng.hpp"
 #define NUM_CHANNELS 16
 
 struct Some3 : Module
@@ -12,6 +13,7 @@ struct Some3 : Module
 		P_SELECTIONSTART,
 		P_SELECTIONEND,
 		P_PROB,
+		P_SEED,
 		PARAMS_LEN
 	};
 	enum InputId
@@ -20,7 +22,6 @@ struct Some3 : Module
 		I_PROB,
 		I_SELECTIONSTART,
 		I_SELECTIONEND,
-		I_SEED,
 		I_CV,
 		I_SHIFTUP,
 		I_SHIFTDOWN,
@@ -47,11 +48,11 @@ struct Some3 : Module
 		LENGTH
 	};
 
+	float _lastSeed = -1.f;
 	int _selectionStart = 0;
 	int _selectionEnd = 0;
 	int _selectionLength = 0;
 	int _outputs[NUM_CHANNELS];
-	int _[NUM_CHANNELS];
 	float _prob = 0.f;
 	bool _selectionStartErr = false;
 	bool _selectionEndErr = false;
@@ -63,6 +64,7 @@ struct Some3 : Module
 	dsp::SchmittTrigger _shiftUpTrigger;
 	dsp::SchmittTrigger _shiftDownTrigger;
 	dsp::ClockDivider _lowPriority;
+	prng::prng _rng;
 
 	Some3()
 	{
@@ -75,20 +77,33 @@ struct Some3 : Module
 		configParam(P_SELECTIONEND, 0.f, NUM_CHANNELS, NUM_CHANNELS, "Selection End");
 		paramQuantities[P_SELECTIONEND]->snapEnabled = true;
 		configParam(P_PROB, 0.f, 1.f, 0.5f, "Probabilty");
+		configParam(P_SEED, 0.f, 1.f, 0.5f, "Seed");
 		configInput(I_TRIG, "Trigger CV");
 		configInput(I_PROB, "Probability CV");
 		configInput(I_SELECTIONSTART, "Selection Start CV");
 		configInput(I_SELECTIONEND, "Selection End CV");
 		configInput(I_CV, "Input CV");
-		configInput(I_SEED, "Seed CV");
 		configInput(I_SHIFTUP, "Shift Selection Up");
 		configInput(I_SHIFTDOWN, "Shift Selection Down");
 		configOutput(O_CV, "CV Out 1");
 		_lowPriority.setDivision(16);
+		_rng.init(random::uniform(),1234.4321);
 	}
 
 	void process(const ProcessArgs &args) override
 	{
+		//seed rng if param is changed
+		float seed = params[P_SEED].getValue();
+		if(_lastSeed != seed)
+		{
+			_lastSeed = seed;
+			_rng.init(seed,1234.4321);
+			for(int i = 0; i < 50; i++)
+			{
+				_rng.next();
+			}
+		}
+
 		_selectionStartErr=false;
 		_selectionEndErr=false;
 		_probErr=false;
@@ -156,8 +171,8 @@ struct Some3 : Module
 		// check if shift up button pressed
 		// move the selection, but don't change the range
 		// upda et the paran knob
-		bool shiftUpButtonPressed = _shiftUpButtonTrigger.process(inputs[I_SHIFTUP].getVoltage());
-		bool shiftDownButtonPressed = _shiftDownButtonTrigger.process(inputs[I_SHIFTDOWN].getVoltage());
+		bool shiftUpButtonPressed = _shiftUpButtonTrigger.process(params[P_SHIFTUPBUTTON].getValue());
+		bool shiftDownButtonPressed = _shiftDownButtonTrigger.process(params[P_SHIFTDOWNBUTTON].getValue());
 		bool shiftupTriggered = _shiftUpTrigger.process(inputs[I_SHIFTUP].getVoltage());
 		bool shiftdownTriggered = _shiftDownTrigger.process(inputs[I_SHIFTDOWN].getVoltage());
 
@@ -174,16 +189,13 @@ struct Some3 : Module
 		}
 		if (change != 0)
 		{
-			DEBUG("Selection Start: %d", _selectionStart);
-			DEBUG("Selection End: %d", _selectionEnd);
 			_selectionStart += change;
 			_selectionEnd += change;
-			DEBUG("Selection Start: %d", _selectionStart);
-			DEBUG("Selection End: %d", _selectionEnd);
-			params[P_SELECTIONSTART].setValue(_selectionStart - 1);
-			params[P_SELECTIONEND].setValue(_selectionEnd - 1);
-			DEBUG("Param Start: %f", params[P_SELECTIONSTART].getValue());
-			DEBUG("Param End: %f", params[P_SELECTIONEND].getValue());
+			float v=params[P_SELECTIONSTART].getValue();
+			params[P_SELECTIONSTART].setValue(v + change);
+			v=params[P_SELECTIONEND].getValue();
+			params[P_SELECTIONEND].setValue(v + change);
+			// DEBUG("Param End: %f", params[P_SELECTIONEND].getValue());
 		}
 
 		// check tigger and trigger button
@@ -195,13 +207,13 @@ struct Some3 : Module
 			outputs[O_CV].setChannels(NUM_CHANNELS);
 
 
-			DEBUG("Selection Start: %d", _selectionStart);
-			DEBUG("Selection End: %d", _selectionEnd);
-			DEBUG("Selection Length: %d", _selectionLength);
+			// DEBUG("Selection Start: %d", _selectionStart);
+			// DEBUG("Selection End: %d", _selectionEnd);
+			// DEBUG("Selection Length: %d", _selectionLength);
 
-			DEBUG("Probability: %f", _prob);
+			// DEBUG("Probability: %f", _prob);
 			int targetActive = _selectionLength * _prob;
-			DEBUG("Target Active: %d", targetActive);
+			// DEBUG("Target Active: %d", targetActive);
 
 			// init the main array
 			for (int i = 0; i < NUM_CHANNELS; i++)
@@ -214,38 +226,38 @@ struct Some3 : Module
 			for (int i = 0; i < _selectionLength; i++)
 			{
 				scope[i] = i + _selectionStart;
-				DEBUG("INIT Scope[%d]: %d", i, scope[i]);
+				// DEBUG("INIT Scope[%d]: %d", i, scope[i]);
 			}
 
 			// shuffle array
 			for (int i = 0; i < _selectionLength; i++)
 			{
-				int j = rand() % _selectionLength;
-				DEBUG("Swap %d with %d", i, j);
+				int j = _selectionLength * _rng.uniform();
+				// DEBUG("Swap %d with %d", i, j);
 				std::swap(scope[i], scope[j]);
 			}
-			DEBUG("UPDATE MAIN ARRAY");
+			// DEBUG("UPDATE MAIN ARRAY");
 			// use only the needed quantity from the front of scope
 			for (int i = 0; i < targetActive; i++)
 			{
 				_outputs[scope[i]] = scope[i];
-				DEBUG("scope[%d] = %d, output[scope[i]]=%d ", i, scope[i], _outputs[scope[i]]);
+				// DEBUG("scope[%d] = %d, output[scope[i]]=%d ", i, scope[i], _outputs[scope[i]]);
 			}
 
 			// process the output array
 			for (int i = 0; i < NUM_CHANNELS; i++)
 			{
-				DEBUG("Output[%d]: %d", i, _outputs[i]);
+				// DEBUG("Output[%d]: %d", i, _outputs[i]);
 				if (_outputs[i] == -1)
 				{
 					// stop output
-					DEBUG("Stop output %d", i);
+					// DEBUG("Stop output %d", i);
 					outputs[O_CV].setVoltage(0.f, i);
 				}
 				else
 				{
 					// start output
-					DEBUG("Start output %d", i);
+					// DEBUG("Start output %d", i);
 					outputs[O_CV].setVoltage(10.f, i);
 				}
 			}
@@ -265,16 +277,14 @@ struct Some3Widget : ModuleWidget
 		float yOffset = 15;
 		float lx = width / 4;
 		float rx = lx * 3;
-		float sx = 10;
 		float sy = 10;
-		float x = xOffset;
 		float y = yOffset;
 
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(lx, y)), module, Some3::I_TRIG));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(lx + 3.5, y - 3.5)), module, Some3::P_TRIGBUTTON));
 
 		y += sy;
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(rx, y)), module, Some3::I_SEED));
+		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(rx, y)), module, Some3::P_SEED));
 		addInput(createInputCentered<CoffeeInputPortIndicator>(mm2px(Vec(lx, y)), module, Some3::I_PROB));
 		addChild(createLightCentered<SmallLight<RedLight> >(mm2px(Vec(lx + 3.5, y + 3.5)), module, Some3::L_PROB_ERR));
 
