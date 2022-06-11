@@ -97,23 +97,44 @@ struct Some3 : Module
 		_rng.init(random::uniform(),1234.4321);
 	}
 
+	void onReset() override {
+		float seed=getSeed();
+		setSeed(seed);
+	}
+
+	float getSeed() {
+		return params[P_SEED].getValue();
+	}
+
+	void setSeed(float seed) {
+		_lastSeed = seed;
+		_rng.init(seed,1234.4321);
+	}
+
+
 	void process(const ProcessArgs &args) override
 	{
-		//seed rng if param is changed
-		float seed = params[P_SEED].getValue();
-		if(_lastSeed != seed)
+		//reset trigger and button triggers
+		bool resetButtonPressed = _resetButtonTrigger.process(params[P_RESETBUTTON].getValue());
+		bool resetTriggered = _resetTrigger.process(inputs[I_RESET].getVoltage());
+		if (resetButtonPressed || resetTriggered)
 		{
-			_lastSeed = seed;
-			_rng.init(seed,1234.4321);
-			for(int i = 0; i < 50; i++)
-			{
-				_rng.next();
-			}
+			onReset();
+		}
+		
+		//seed rng if param is changed
+		if(_lastSeed != params[P_SEED].getValue())
+		{
+			float seed=getSeed();
+			setSeed(seed);
 		}
 
+		//clear out of bound error states
 		_selectionStartErr=false;
 		_selectionEndErr=false;
 		_probErr=false;
+
+		// use prob if connected, otherwise use knob
 		if (inputs[I_PROB].isConnected())
 		{
 			_prob = inputs[I_PROB].getVoltage();
@@ -177,7 +198,7 @@ struct Some3 : Module
 
 		// check if shift up button pressed
 		// move the selection, but don't change the range
-		// upda et the paran knob
+		// update the param knob
 		bool shiftUpButtonPressed = _shiftUpButtonTrigger.process(params[P_SHIFTUPBUTTON].getValue());
 		bool shiftDownButtonPressed = _shiftDownButtonTrigger.process(params[P_SHIFTDOWNBUTTON].getValue());
 		bool shiftupTriggered = _shiftUpTrigger.process(inputs[I_SHIFTUP].getVoltage());
