@@ -31,15 +31,28 @@ struct Some3 : Module
 	{
 		ENUMS(L_SELECTED, NUM_CHANNELS),
 		ENUMS(L_ACTIVE, NUM_CHANNELS),
+		L_SELECTIONSTART_ERR,
+		L_SELECTIONEND_ERR,
+		L_PROB_ERR,
 		LIGHTS_LEN
 	};
+
+	enum SelectionMode
+	{
+		ENDPOS,
+		LENGTH
+	};
+
 	int _selectionStart = 0;
 	int _selectionEnd = 0;
 	int _selectionLength = 0;
 	int _outputs[NUM_CHANNELS];
 	int _[NUM_CHANNELS];
+	bool _selectionStartErr = false;
+	bool _selectionEndErr = false;
 	dsp::SchmittTrigger _trigTrigger;
 	dsp::BooleanTrigger _trigButtonTrigger;
+	dsp::ClockDivider _lowPriority;
 
 
 	Some3()
@@ -58,27 +71,61 @@ struct Some3 : Module
 		configInput(I_CV, "Input CV");
 		configInput(I_SEED, "Seed CV");
 		configOutput(O_CV, "CV Out 1");
+		_lowPriority.setDivision(16);
 	}
 
 	void process(const ProcessArgs &args) override
 	{
-		// update lighsts to show selection
-		for(int i=0; i<NUM_CHANNELS; i++){
-			if(i>=params[P_SELECTIONSTART].getValue() && i<params[P_SELECTIONEND].getValue()){
-				lights[L_SELECTED + i].setBrightness(1.0f);
+		//check slection input out of bounds errors
+		_selectionStartErr=(inputs[I_SELECTIONSTART].getVoltage() < 0.f || inputs[I_SELECTIONSTART].getVoltage() > NUM_CHANNELS);
+		_selectionEndErr=(inputs[I_SELECTIONEND].getVoltage() < 0.f || inputs[I_SELECTIONEND].getVoltage() > NUM_CHANNELS);
+
+		if(_lowPriority.process()){
+			// update lighsts to show selection
+			for(int i=0; i<NUM_CHANNELS; i++){
+				if(i>=params[P_SELECTIONSTART].getValue() && i<params[P_SELECTIONEND].getValue()){
+					lights[L_SELECTED + i].setBrightness(1.0f);
+				}
+				else{
+					lights[L_SELECTED + i].setBrightness(0.0f);
+				}
+			}
+
+			// update prob light is out of bounds
+			if(inputs[I_PROB].getVoltage() < 0.f || inputs[I_PROB].getVoltage() > 1.f){
+				lights[L_PROB_ERR].setBrightness(1.0f);
 			}
 			else{
-				lights[L_SELECTED + i].setBrightness(0.0f);
+				lights[L_PROB_ERR].setBrightness(0.0f);
 			}
+
+			// update selection error lights
+			lights[L_SELECTIONSTART_ERR].setBrightness(_selectionStartErr);
+			lights[L_SELECTIONEND_ERR].setBrightness(_selectionEndErr);
 		}
 
 		//check tigger and trigger button
 		bool trigButtonPressed = _trigButtonTrigger.process(params[P_TRIGBUTTON].getValue());
 		bool trigTriggered = _trigTrigger.process(inputs[I_TRIG].getVoltage());
 		if(trigButtonPressed | trigTriggered){
-			_selectionStart = 1+int(params[P_SELECTIONSTART].getValue());
-			_selectionEnd = 1+int(params[P_SELECTIONEND].getValue());
+			//use select start input if connected 
+			if(inputs[I_SELECTIONSTART].isConnected()){
+				_selectionStart = clamp(1+(int)inputs[I_SELECTIONSTART].getVoltage(), 0, NUM_CHANNELS);
+			} else {
+				 _selectionStart = 1+int(params[P_SELECTIONSTART].getValue());
+			}
+
+			//use select end input if connected
+			if(inputs[I_SELECTIONEND].isConnected()){
+				_selectionEnd = clamp(1+(int)inputs[I_SELECTIONEND].getVoltage(), 0, NUM_CHANNELS);
+			} else {
+				_selectionEnd = 1+int(params[P_SELECTIONEND].getValue());
+			}
+
 			_selectionLength = _selectionEnd - _selectionStart;
+			
+
+
 			DEBUG("Selection Start: %d", _selectionStart);
 			DEBUG("Selection End: %d", _selectionEnd);
 			DEBUG("Selection Length: %d", _selectionLength);
@@ -107,15 +154,13 @@ struct Some3 : Module
 				std::swap(scope[i], scope[j]);
 			}
 
-
-
 			// use only the first quantity from the scope
 			for(int i=0; i<targetActive; i++){
 				_outputs[scope[i]] = scope[i];
 				DEBUG("scope[%d] = %d", i, scope[i]);
 			}
 
-			// process the array
+			// process the output array
 			for(int i=0; i<NUM_CHANNELS;i++){
 				if(_outputs[i] == -1){
 					lights[L_ACTIVE + i].setBrightness(0.0f);
@@ -140,43 +185,49 @@ struct Some3Widget : ModuleWidget
 		float width = 20.32;
 		float xOffset = 5;
 		float yOffset = 15;
+		float lx=width/4;
+		float rx=lx * 3;
 		float sx = 10;
 		float sy = 10;
 		float x = xOffset;
 		float y = yOffset;
 
-		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y)), module, Some3::I_TRIG));
-		addParam(createParamCentered<Coffee3mmButton>(mm2px(Vec(x + 3.5, y - 3.5)), module, Some3::P_TRIGBUTTON));
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(lx, y)), module, Some3::I_TRIG));
+		addParam(createParamCentered<Coffee3mmButton>(mm2px(Vec(lx + 3.5, y - 3.5)), module, Some3::P_TRIGBUTTON));
 
 		y += sy;
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Some3::I_SEED));
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(rx, y)), module, Some3::I_SEED));
+		addInput(createInputCentered<CoffeeInputPortIndicator>(mm2px(Vec(lx, y)), module, Some3::I_PROB));
+		addChild(createLightCentered<SmallLight<RedLight> >(mm2px(Vec(lx+3.5, y + 3.5)), module, Some3::L_PROB_ERR));
 
 		y += sy;
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Some3::I_SELECTIONSTART));
-		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x + sx, y)), module, Some3::P_SELECTIONSTART));
+		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(lx, y)), module, Some3::P_PROB));
 
+		y=yOffset+sy+sy+sy+2.5;
+		addInput(createInputCentered<CoffeeInputPortIndicator>(mm2px(Vec(lx, y)), module, Some3::I_SELECTIONSTART));
+		addChild(createLightCentered<SmallLight<RedLight> >(mm2px(Vec(lx+3.5, y + 3.5)), module, Some3::L_SELECTIONSTART_ERR));
 		y += sy;
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Some3::I_SELECTIONEND));
-		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x + sx, y)), module, Some3::P_SELECTIONEND));
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(lx, y)), module, Some3::P_SELECTIONSTART));
 
+		y=yOffset+sy*7;
+		y+= sy - 2.5;
+		addInput(createInputCentered<CoffeeInputPortIndicator>(mm2px(Vec(lx, y)), module, Some3::I_SELECTIONEND));
+		addChild(createLightCentered<SmallLight<RedLight> >(mm2px(Vec(lx+3.5, y + 3.5)), module, Some3::L_SELECTIONEND_ERR));
 		y += sy;
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Some3::I_PROB));
-		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x + sx, y)), module, Some3::P_PROB));
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(lx, y)), module, Some3::P_SELECTIONEND));
 
-		y += sy;
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Some3::I_CV));
-		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x+sx, y)), module, Some3::O_CV));
 
-		y += sy;
-		for (int i = 0; i < NUM_CHANNELS / 2; i++)
-		{
-			float x1 = width / 4;
-			float x2 = x1 * 3;
-			addChild(createLightCentered<MediumLight<OrangeLight> >(mm2px(Vec(x1-2, y + (i * 5))), module, Some3::L_SELECTED + i));
-			addChild(createLightCentered<MediumLight<OrangeLight> >(mm2px(Vec(x2-2, y + (i * 5))), module, Some3::L_SELECTED + (i + 8)));
 
-			addChild(createLightCentered<MediumLight<GreenLight> >(mm2px(Vec(x1 + 2, y + (i * 5))), module, Some3::L_ACTIVE + i));
-			addChild(createLightCentered<MediumLight<GreenLight> >(mm2px(Vec(x2 + 2, y + (i * 5))), module, Some3::L_ACTIVE + (i + 8)));
+		//input and output
+		y=yOffset+(sy*10);
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(lx, y)), module, Some3::I_CV));
+		y=yOffset+(sy*10);
+		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(rx, y)), module, Some3::O_CV));
+
+		y=yOffset+sy+sy+sy;
+		for (int i = 0; i < NUM_CHANNELS; i++){
+			addChild(createLightCentered<MediumLight<OrangeLight> >(mm2px(Vec(rx-2, y + (i * 4))), module, Some3::L_SELECTED + i));
+			addChild(createLightCentered<MediumLight<GreenLight> >(mm2px(Vec(rx+ 2, y + (i * 4))), module, Some3::L_ACTIVE + i));
 		}
 	}
 };
