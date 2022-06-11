@@ -50,6 +50,7 @@ struct Some3 : Module
 		LENGTH
 	};
 
+	float _selectionScaling=10.f;
 	float _lastSeed = -1.f;
 	int _selectionStart = 0;
 	int _selectionEnd = 0;
@@ -152,7 +153,10 @@ struct Some3 : Module
 		// use select start input if connected
 		if (inputs[I_SELECTIONSTART].isConnected())
 		{
-			_selectionStart = inputs[I_SELECTIONSTART].getVoltage();
+			//scale the input to the number of channels
+			float v=rescale(inputs[I_SELECTIONSTART].getVoltage(), 0.f, _selectionScaling, 0.f, NUM_CHANNELS);
+			_selectionStart = v;
+
 			_selectionStartErr = _selectionStart < 0 || _selectionStart> NUM_CHANNELS;
 			_selectionStart = clamp(_selectionStart, 0, NUM_CHANNELS);
 		}
@@ -164,7 +168,9 @@ struct Some3 : Module
 		// use select end input if connected
 		if (inputs[I_SELECTIONEND].isConnected())
 		{
-			_selectionEnd = inputs[I_SELECTIONEND].getVoltage();
+			//scale the input to the number of channels
+			float v=rescale(inputs[I_SELECTIONEND].getVoltage(), 0.f, _selectionScaling, 0.f, NUM_CHANNELS);
+			_selectionEnd = v;
 			_selectionEndErr = _selectionEnd < 0 || _selectionEnd > NUM_CHANNELS;
 			_selectionEnd= clamp(_selectionEnd, 0, NUM_CHANNELS);
 		}
@@ -363,6 +369,19 @@ struct Some3Widget : ModuleWidget
 			addChild(createLightCentered<MediumLight<GreenLight> >(mm2px(Vec(rx + 2, y + (i * 4))), module, Some3::L_ACTIVE + i));
 		}
 	}
+	void appendContextMenu(Menu* menu) override {
+		Some3* module = dynamic_cast<Some3*>(this->module);
+		assert(module);
+		menu->addChild(new MenuSeparator());
+		menu->addChild(createSubmenuItem("Selection V Scaling", "", [=](Menu* menu) {
+			Menu* selectionScalingMenu = new Menu();
+			selectionScalingMenu->addChild(createMenuItem("0 - 1v", CHECKMARK(module->_selectionScaling == 1.f), [module]() { module->_selectionScaling = 1.f; }));
+			selectionScalingMenu->addChild(createMenuItem("0 - 5v", CHECKMARK(module->_selectionScaling == 5.f), [module]() { module->_selectionScaling = 5.f; }));
+			selectionScalingMenu->addChild(createMenuItem("0 - 10v", CHECKMARK(module->_selectionScaling == 10.f), [module]() { module->_selectionScaling = 10.f; }));
+			selectionScalingMenu->addChild(createMenuItem("0 - 16v", CHECKMARK(module->_selectionScaling == 16.f), [module]() { module->_selectionScaling = 16.f; }));
+			menu->addChild(selectionScalingMenu);
+		}));
+	};
 };
 
 Model *modelSome3 = createModel<Some3, Some3Widget>("Some3");
