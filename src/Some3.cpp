@@ -14,6 +14,7 @@ struct Some3 : Module
 		P_SELECTIONEND,
 		P_PROB,
 		P_SEED,
+		P_RESETBUTTON,
 		PARAMS_LEN
 	};
 	enum InputId
@@ -25,6 +26,7 @@ struct Some3 : Module
 		I_CV,
 		I_SHIFTUP,
 		I_SHIFTDOWN,
+		I_RESET,
 		INPUTS_LEN
 	};
 	enum OutputId
@@ -58,11 +60,14 @@ struct Some3 : Module
 	bool _selectionEndErr = false;
 	bool _probErr = false;
 	dsp::SchmittTrigger _trigTrigger;
+	dsp::SchmittTrigger _shiftUpTrigger;
+	dsp::SchmittTrigger _shiftDownTrigger;
+	dsp::SchmittTrigger _resetTrigger;
 	dsp::BooleanTrigger _trigButtonTrigger;
 	dsp::BooleanTrigger _shiftUpButtonTrigger;
 	dsp::BooleanTrigger _shiftDownButtonTrigger;
-	dsp::SchmittTrigger _shiftUpTrigger;
-	dsp::SchmittTrigger _shiftDownTrigger;
+	dsp::BooleanTrigger _resetButtonTrigger;
+
 	dsp::ClockDivider _lowPriority;
 	prng::prng _rng;
 
@@ -72,6 +77,7 @@ struct Some3 : Module
 		configButton(P_TRIGBUTTON, "Manual Trigger");
 		configButton(P_SHIFTUPBUTTON, "Shift Up");
 		configButton(P_SHIFTDOWNBUTTON, "Shift Down");
+		configButton(P_RESETBUTTON, "Reset");
 		configParam(P_SELECTIONSTART, 0.f, NUM_CHANNELS, 0, "Selection Start");
 		paramQuantities[P_SELECTIONSTART]->snapEnabled = true;
 		configParam(P_SELECTIONEND, 0.f, NUM_CHANNELS, NUM_CHANNELS, "Selection End");
@@ -85,6 +91,7 @@ struct Some3 : Module
 		configInput(I_CV, "Input CV");
 		configInput(I_SHIFTUP, "Shift Selection Up");
 		configInput(I_SHIFTDOWN, "Shift Selection Down");
+		configInput(I_RESET, "Reset");
 		configOutput(O_CV, "CV Out 1");
 		_lowPriority.setDivision(16);
 		_rng.init(random::uniform(),1234.4321);
@@ -280,23 +287,32 @@ struct Some3Widget : ModuleWidget
 		float sy = 10;
 		float y = yOffset;
 
+		//trigger input and button
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(lx, y)), module, Some3::I_TRIG));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(lx + 3.5, y - 3.5)), module, Some3::P_TRIGBUTTON));
 
+		//rest input and button
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(rx, y)), module, Some3::I_RESET));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(rx + 3.5, y - 3.5)), module, Some3::P_RESETBUTTON));
+
+		//seed, prob input and err indicator
 		y += sy;
 		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(rx, y)), module, Some3::P_SEED));
 		addInput(createInputCentered<CoffeeInputPortIndicator>(mm2px(Vec(lx, y)), module, Some3::I_PROB));
 		addChild(createLightCentered<SmallLight<RedLight> >(mm2px(Vec(lx + 3.5, y + 3.5)), module, Some3::L_PROB_ERR));
 
+		// prob knob 
 		y += sy;
 		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(lx, y)), module, Some3::P_PROB));
 
+		// selection start input and err indicator, and knob
 		y = yOffset + sy + sy + sy + 2.5;
 		addInput(createInputCentered<CoffeeInputPortIndicator>(mm2px(Vec(lx, y)), module, Some3::I_SELECTIONSTART));
 		addChild(createLightCentered<SmallLight<RedLight> >(mm2px(Vec(lx + 3.5, y + 3.5)), module, Some3::L_SELECTIONSTART_ERR));
 		y += sy;
 		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(lx, y)), module, Some3::P_SELECTIONSTART));
 
+		//selection rang shift up/down
 		y += sy + 2.5;
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(lx, y)), module, Some3::I_SHIFTUP));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(lx + 3.5, y - 3.5)), module, Some3::P_SHIFTUPBUTTON));
@@ -304,6 +320,7 @@ struct Some3Widget : ModuleWidget
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(lx, y)), module, Some3::I_SHIFTDOWN));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(lx + 3.5, y - 3.5)), module, Some3::P_SHIFTDOWNBUTTON));
 
+		// selection end input and err indicator, and knob
 		y = yOffset + sy * 7;
 		y += sy - 2.5;
 		addInput(createInputCentered<CoffeeInputPortIndicator>(mm2px(Vec(lx, y)), module, Some3::I_SELECTIONEND));
@@ -317,6 +334,7 @@ struct Some3Widget : ModuleWidget
 		y = yOffset + (sy * 10);
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(rx, y)), module, Some3::O_CV));
 
+		// channel lights
 		y = yOffset + sy + sy + sy;
 		for (int i = 0; i < NUM_CHANNELS; i++)
 		{
