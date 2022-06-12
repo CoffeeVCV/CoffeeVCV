@@ -53,7 +53,7 @@ struct Some3 : Module
 
 	float _selectionScaling=1.f;
 	float _selectionScales[3]={1.f, 10.f, 16.f};
-	float _lastSeed = -1.f;
+	u_int64_t _lastSeed = 876543210;
 	int _selectionStart = 0;
 	int _selectionEnd = 0;
 	int _selectionLength = 0;
@@ -72,7 +72,8 @@ struct Some3 : Module
 	dsp::BooleanTrigger _resetButtonTrigger;
 
 	dsp::ClockDivider _lowPriority;
-	prng::prng _rng;
+	random::Xoroshiro128Plus rng;
+	//prng::prng _rng;
 
 	Some3()
 	{
@@ -98,23 +99,39 @@ struct Some3 : Module
 		configInput(I_RESET, "Reset");
 		configOutput(O_CV, "CV Out 1");
 		_lowPriority.setDivision(16);
-		_rng.init(random::uniform(),1234.4321);
+		//_rng.init(random::uniform(),1234.4321);
+		rng.seed(rand(),12344321);
 	}
 
 	void onReset() override {
-		float seed=getSeed();
+		u_int64_t seed=getSeed();
 		setSeed(seed);
+
+		rng.seed(seed,12345678);
+		float r;
+		for(int i=0; i<10; i++){
+			r=rng()/float(UINT64_MAX);
+			DEBUG("rng: %f",r);
+		}
+
 	}
 
-	float getSeed() {
-		return params[P_SEED].getValue();
+	u_int64_t getSeed() {
+		float v=params[P_SEED].getValue();
+		return u_int64_t(v*UINT64_MAX);
 	}
 
-	void setSeed(float seed) {
+	void setSeed(u_int64_t seed) {
 		_lastSeed = seed;
-		_rng.init(seed,1234.4321);
+		//_rng.init(seed,1234.4321);
+		rng.seed(seed,12344321);
 	}
 
+	float rng_uniform() {
+		float r=rng()/float(UINT64_MAX);
+		DEBUG("rng: %f",r);
+		return r;
+	}
 
 	void process(const ProcessArgs &args) override
 	{
@@ -124,13 +141,6 @@ struct Some3 : Module
 		if (resetButtonPressed || resetTriggered)
 		{
 			onReset();
-		}
-		
-		//seed rng if param is changed
-		if(_lastSeed != params[P_SEED].getValue())
-		{
-			float seed=getSeed();
-			setSeed(seed);
 		}
 
 		//clear out of bound error states
@@ -272,7 +282,7 @@ struct Some3 : Module
 			// shuffle array
 			for (int i = 0; i < _selectionLength; i++)
 			{
-				int j = _selectionLength * _rng.uniform();
+				int j = _selectionLength * rng_uniform();
 				// DEBUG("Swap %d with %d", i, j);
 				std::swap(scope[i], scope[j]);
 			}
