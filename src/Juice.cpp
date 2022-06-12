@@ -3,7 +3,7 @@
 #define NUM_ROWS 8
 #define NUM_SLOTS 16
 
-struct Empower : Module
+struct Juice : Module
 {
 	enum ParamId
 	{
@@ -124,7 +124,7 @@ struct Empower : Module
 	bool nextTriggerReady = true;
 	bool randomTriggerReady = true;
 
-	Empower()
+	Juice()
 	{
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configButton(P_SAVEBUTTON, "Save");
@@ -351,7 +351,7 @@ struct NinetyNineDisplay : DigitalDisplay
 
 struct PresetDisplay : NinetyNineDisplay
 {
-	Empower *module;
+	Juice *module;
 	void step() override
 	{
 		int slots = NUM_SLOTS;
@@ -363,14 +363,13 @@ struct PresetDisplay : NinetyNineDisplay
 	}
 };
 
-struct EmpowerWidget : ModuleWidget
+struct JuiceWidget : ModuleWidget
 {
-	EmpowerWidget(Empower *module)
+	JuiceWidget(Juice *module)
 	{
 		setModule(module);
-		setPanel(createPanel(asset::plugin(pluginInstance, "res/Empower.svg")));
+		setPanel(createPanel(asset::plugin(pluginInstance, "res/Juice.svg")));
 
-		float width = 121.92;
 		float sx = 10;
 		float sy = 10;
 		float yOffset = 12;
@@ -381,31 +380,31 @@ struct EmpowerWidget : ModuleWidget
 		// save load next prev
 
 		x = xOffset + sx;
-		addParam(createParamCentered<Coffee3mmButton>(mm2px(Vec(x - 1.5, y - 2)), module, Empower::P_SAVEBUTTON));
-		addParam(createParamCentered<Coffee3mmButton>(mm2px(Vec(x + 2.5, y - 2)), module, Empower::P_LOADBUTTON));
-		addParam(createParamCentered<Coffee3mmButton>(mm2px(Vec(x - 1.5, y + 2)), module, Empower::P_PREVBUTTON));
-		addParam(createParamCentered<Coffee3mmButton>(mm2px(Vec(x + 2.5, y + 2)), module, Empower::P_NEXTBUTTON));
-		addChild(createLightCentered<TinyLight<GreenLight> >(mm2px(Vec(x + 0.5, y)), module, Empower::L_SLOTINUSE));
+		addParam(createParamCentered<Coffee3mmButton>(mm2px(Vec(x - 1.5, y - 2)), module, Juice::P_SAVEBUTTON));
+		addParam(createParamCentered<Coffee3mmButton>(mm2px(Vec(x + 2.5, y - 2)), module, Juice::P_LOADBUTTON));
+		addParam(createParamCentered<Coffee3mmButton>(mm2px(Vec(x - 1.5, y + 2)), module, Juice::P_PREVBUTTON));
+		addParam(createParamCentered<Coffee3mmButton>(mm2px(Vec(x + 2.5, y + 2)), module, Juice::P_NEXTBUTTON));
+		addChild(createLightCentered<TinyLight<GreenLight> >(mm2px(Vec(x + 0.5, y)), module, Juice::L_SLOTINUSE));
 
 		y = yOffset + sy;
 		x = xOffset;
-		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y)), module, Empower::I_PREVACTIVE));
-		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5)), module, Empower::P_PREVACTIVEBUTTON));
-		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x + sx, y)), module, Empower::I_NEXTACTIVE));
-		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + sx + 3.5, y - 3.5)), module, Empower::P_NEXTACTIVEBUTTON));
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y)), module, Juice::I_PREVACTIVE));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5)), module, Juice::P_PREVACTIVEBUTTON));
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x + sx, y)), module, Juice::I_NEXTACTIVE));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + sx + 3.5, y - 3.5)), module, Juice::P_NEXTACTIVEBUTTON));
 
 		y = yOffset + sy + sy;
 		x = xOffset;
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Empower::I_SELECT));
-		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x + sx, y)), module, Empower::I_RANDOMACTIVE));
-		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + sx + 3.5, y - 3.5)), module, Empower::P_RANDOMACTIVEBUTTON));
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Juice::I_SELECT));
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x + sx, y)), module, Juice::I_RANDOMACTIVE));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + sx + 3.5, y - 3.5)), module, Juice::P_RANDOMACTIVEBUTTON));
 
 		x = xOffset;
 		for (int i = 0; i < NUM_ROWS; i++)
 		{
 			y = yOffset + sy + sy + sy + (i * sy);
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Empower::P_V + i));
-			addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x + sx, y)), module, Empower::O_CV1 + i));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Juice::P_V + i));
+			addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x + sx, y)), module, Juice::O_CV1 + i));
 		}
 
 		x = 1;
@@ -417,4 +416,4 @@ struct EmpowerWidget : ModuleWidget
 	}
 };
 
-Model *modelEmpower = createModel<Empower, EmpowerWidget>("Empower");
+Model *modelJuice = createModel<Juice, JuiceWidget>("Juice");

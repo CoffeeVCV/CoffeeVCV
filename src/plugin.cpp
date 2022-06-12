@@ -17,7 +17,7 @@ void init(Plugin* p) {
 	p->addModel(modelFork);
 	p->addModel(modelSome2);
 	p->addModel(modelTap);
-	p->addModel(modelEmpower);
+	p->addModel(modelJuice);
 	p->addModel(modelTest);
 
 	// Any other plugin initialization may go here.

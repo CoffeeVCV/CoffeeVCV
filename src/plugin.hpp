@@ -19,5 +19,5 @@ extern Model* modelFork;
 extern Model* modelSet;
 extern Model* modelSome2;
 extern Model* modelTap;
-extern Model* modelEmpower;
+extern Model* modelJuice;
 extern Model* modelTest;
