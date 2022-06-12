@@ -1,6 +1,5 @@
 #include "plugin.hpp"
 #include "components.hpp"
-#include "prng.hpp"
 #define NUM_CHANNELS 16
 
 struct Some3 : Module
@@ -51,8 +50,8 @@ struct Some3 : Module
 		LENGTH
 	};
 
-	float _selectionScaling=1.f;
-	float _selectionScales[3]={1.f, 10.f, 16.f};
+	float _selectionScaling = 1.f;
+	float _selectionScales[3] = {1.f, 10.f, 16.f};
 	u_int64_t _lastSeed = 876543210;
 	int _selectionStart = 0;
 	int _selectionEnd = 0;
@@ -73,12 +72,11 @@ struct Some3 : Module
 
 	dsp::ClockDivider _lowPriority;
 	random::Xoroshiro128Plus rng;
-	//prng::prng _rng;
 
 	Some3()
 	{
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configSwitch(P_SELECTIONVSCALE,0.f,2.f,1.f,"Selection voltage scaling",{"0-1v","0-10v","0-16v"});
+		configSwitch(P_SELECTIONVSCALE, 0.f, 2.f, 1.f, "Selection voltage scaling", {"0-1v", "0-10v", "0-16v"});
 		configButton(P_TRIGBUTTON, "Manual Trigger");
 		configButton(P_SHIFTUPBUTTON, "Shift Up");
 		configButton(P_SHIFTDOWNBUTTON, "Shift Down");
@@ -99,65 +97,66 @@ struct Some3 : Module
 		configInput(I_RESET, "Reset");
 		configOutput(O_CV, "CV Out 1");
 		_lowPriority.setDivision(16);
-		//_rng.init(random::uniform(),1234.4321);
-		rng.seed(rand(),12344321);
+		rng.seed(rand(), 12344321);
 	}
 
-	void onReset() override {
-		u_int64_t seed=getSeed();
+	void onReset() override
+	{
+		u_int64_t seed = getSeed();
 		setSeed(seed);
-
-		rng.seed(seed,12345678);
-		float r;
-		for(int i=0; i<10; i++){
-			r=rng()/float(UINT64_MAX);
-			DEBUG("rng: %f",r);
-		}
-
 	}
 
-	u_int64_t getSeed() {
-		float v=params[P_SEED].getValue();
-		return u_int64_t(v*UINT64_MAX);
+	u_int64_t getSeed()
+	{
+		float v = params[P_SEED].getValue();
+		return u_int64_t(v * UINT64_MAX);
 	}
 
-	void setSeed(u_int64_t seed) {
+	void setSeed(u_int64_t seed)
+	{
 		_lastSeed = seed;
-		//_rng.init(seed,1234.4321);
-		rng.seed(seed,12344321);
+		rng.seed(seed, 12344321);
 	}
 
-	float rng_uniform() {
-		float r=rng()/float(UINT64_MAX);
-		DEBUG("rng: %f",r);
+	float rng_uniform()
+	{
+		float r = rng() / float(UINT64_MAX);
 		return r;
 	}
 
-	float getOutput(int channel) {
-		if(inputs[I_CV].isConnected()) {
-			if(inputs[I_CV].isMonophonic()) {
+	float getOutput(int channel)
+	{
+		if (inputs[I_CV].isConnected())
+		{
+			if (inputs[I_CV].isMonophonic())
+			{
 				// send this to all the outputs
 				return inputs[I_CV].getVoltage();
-			} else {
-				//try and map the channels
-				if(inputs[I_CV].getChannels()>=channel) {
+			}
+			else
+			{
+				// try and map the channels
+				if (inputs[I_CV].getChannels() >= channel)
+				{
 					return inputs[I_CV].getVoltage(channel);
-				}	else {
+				}
+				else
+				{
 					// just send 10v for the rest
 					return 10.f;
 				}
 				return inputs[I_CV].getPolyVoltage(channel);
 			}
-		} else { //nothing connected return 10v
+		}
+		else
+		{ // nothing connected return 10v
 			return 10.f;
 		}
 	}
 
-
-
 	void process(const ProcessArgs &args) override
 	{
-		//reset trigger and button triggers
+		// reset trigger and button triggers
 		bool resetButtonPressed = _resetButtonTrigger.process(params[P_RESETBUTTON].getValue());
 		bool resetTriggered = _resetTrigger.process(inputs[I_RESET].getVoltage());
 		if (resetButtonPressed || resetTriggered)
@@ -165,18 +164,18 @@ struct Some3 : Module
 			onReset();
 		}
 
-		//clear out of bound error states
-		_selectionStartErr=false;
-		_selectionEndErr=false;
-		_probErr=false;
+		// clear out of bound error states
+		_selectionStartErr = false;
+		_selectionEndErr = false;
+		_probErr = false;
 
 		// use prob if connected, otherwise use knob
 		if (inputs[I_PROB].isConnected())
 		{
 			_prob = inputs[I_PROB].getVoltage();
-			if(_prob<0 || _prob>1)
+			if (_prob < 0 || _prob > 1)
 			{
-				_probErr=true;
+				_probErr = true;
 			}
 			_prob = clamp(_prob, 0.f, 1.f);
 		}
@@ -191,11 +190,11 @@ struct Some3 : Module
 		// use select start input if connected
 		if (inputs[I_SELECTIONSTART].isConnected())
 		{
-			//scale the input to the number of channels
-			float v=rescale(inputs[I_SELECTIONSTART].getVoltage(), 0.f, _selectionScaling, 0.f, NUM_CHANNELS);
+			// scale the input to the number of channels
+			float v = rescale(inputs[I_SELECTIONSTART].getVoltage(), 0.f, _selectionScaling, 0.f, NUM_CHANNELS);
 			_selectionStart = v;
 
-			_selectionStartErr = _selectionStart < 0 || _selectionStart> NUM_CHANNELS;
+			_selectionStartErr = _selectionStart < 0 || _selectionStart > NUM_CHANNELS;
 			_selectionStart = clamp(_selectionStart, 0, NUM_CHANNELS);
 		}
 		else
@@ -206,11 +205,11 @@ struct Some3 : Module
 		// use select end input if connected
 		if (inputs[I_SELECTIONEND].isConnected())
 		{
-			//scale the input to the number of channels
-			float v=rescale(inputs[I_SELECTIONEND].getVoltage(), 0.f, _selectionScaling, 0.f, NUM_CHANNELS);
+			// scale the input to the number of channels
+			float v = rescale(inputs[I_SELECTIONEND].getVoltage(), 0.f, _selectionScaling, 0.f, NUM_CHANNELS);
 			_selectionEnd = v;
 			_selectionEndErr = _selectionEnd < 0 || _selectionEnd > NUM_CHANNELS;
-			_selectionEnd= clamp(_selectionEnd, 0, NUM_CHANNELS);
+			_selectionEnd = clamp(_selectionEnd, 0, NUM_CHANNELS);
 		}
 		else
 		{
@@ -218,7 +217,7 @@ struct Some3 : Module
 		}
 
 		// check out of bound errors
-		if(_selectionStart > _selectionEnd)
+		if (_selectionStart > _selectionEnd)
 		{
 			_selectionStartErr = true;
 			_selectionEndErr = true;
@@ -263,11 +262,10 @@ struct Some3 : Module
 		{
 			_selectionStart += change;
 			_selectionEnd += change;
-			float v=params[P_SELECTIONSTART].getValue();
+			float v = params[P_SELECTIONSTART].getValue();
 			params[P_SELECTIONSTART].setValue(v + change);
-			v=params[P_SELECTIONEND].getValue();
+			v = params[P_SELECTIONEND].getValue();
 			params[P_SELECTIONEND].setValue(v + change);
-			// DEBUG("Param End: %f", params[P_SELECTIONEND].getValue());
 		}
 
 		// check tigger and trigger button
@@ -278,13 +276,7 @@ struct Some3 : Module
 			_selectionLength = _selectionEnd - _selectionStart;
 			outputs[O_CV].setChannels(NUM_CHANNELS);
 
-			// DEBUG("Selection Start: %d", _selectionStart);
-			// DEBUG("Selection End: %d", _selectionEnd);
-			// DEBUG("Selection Length: %d", _selectionLength);
-
-			// DEBUG("Probability: %f", _prob);
 			int targetActive = _selectionLength * _prob;
-			// DEBUG("Target Active: %d", targetActive);
 
 			// init the main array
 			for (int i = 0; i < NUM_CHANNELS; i++)
@@ -297,39 +289,33 @@ struct Some3 : Module
 			for (int i = 0; i < _selectionLength; i++)
 			{
 				scope[i] = i + _selectionStart;
-				// DEBUG("INIT Scope[%d]: %d", i, scope[i]);
 			}
 
 			// shuffle array
 			for (int i = 0; i < _selectionLength; i++)
 			{
 				int j = _selectionLength * rng_uniform();
-				// DEBUG("Swap %d with %d", i, j);
 				std::swap(scope[i], scope[j]);
 			}
-			// DEBUG("UPDATE MAIN ARRAY");
+
 			// use only the needed quantity from the front of scope
 			for (int i = 0; i < targetActive; i++)
 			{
 				_outputs[scope[i]] = scope[i];
-				// DEBUG("scope[%d] = %d, output[scope[i]]=%d ", i, scope[i], _outputs[scope[i]]);
 			}
 
 			// process the output array
 			for (int i = 0; i < NUM_CHANNELS; i++)
 			{
-				// DEBUG("Output[%d]: %d", i, _outputs[i]);
 				if (_outputs[i] == -1)
 				{
 					// stop output
-					// DEBUG("Stop output %d", i);
 					outputs[O_CV].setVoltage(0.f, i);
 				}
 				else
 				{
 					// start output
-					// DEBUG("Start output %d", i);
-					float v=getOutput(i);
+					float v = getOutput(i);
 					outputs[O_CV].setVoltage(v, i);
 				}
 			}
@@ -351,21 +337,21 @@ struct Some3Widget : ModuleWidget
 		float sy = 10;
 		float y = yOffset;
 
-		//trigger input and button
+		// trigger input and button
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(lx, y)), module, Some3::I_TRIG));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(lx + 3.5, y - 3.5)), module, Some3::P_TRIGBUTTON));
 
-		//rest input and button
+		// rest input and button
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(rx, y)), module, Some3::I_RESET));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(rx + 3.5, y - 3.5)), module, Some3::P_RESETBUTTON));
 
-		//seed, prob input and err indicator
+		// seed, prob input and err indicator
 		y += sy;
 		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(rx, y)), module, Some3::P_SEED));
 		addInput(createInputCentered<CoffeeInputPortIndicator>(mm2px(Vec(lx, y)), module, Some3::I_PROB));
 		addChild(createLightCentered<SmallLight<RedLight> >(mm2px(Vec(lx + 3.5, y + 3.5)), module, Some3::L_PROB_ERR));
 
-		// prob knob 
+		// prob knob
 		y += sy;
 		addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(lx, y)), module, Some3::P_PROB));
 
@@ -376,11 +362,11 @@ struct Some3Widget : ModuleWidget
 		y += sy;
 		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(lx, y)), module, Some3::P_SELECTIONSTART));
 
-		y += sy -2.5;
+		y += sy - 2.5;
 		// selection scaling switch
 		addParam(createParamCentered<CoffeeSwitch3PosHori>(mm2px(Vec(lx, y)), module, Some3::P_SELECTIONVSCALE));
 
-		//selection rang shift up/down
+		// selection rang shift up/down
 		y += 7.5;
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(lx, y)), module, Some3::I_SHIFTUP));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(lx + 3.5, y - 3.5)), module, Some3::P_SHIFTUPBUTTON));
@@ -410,18 +396,6 @@ struct Some3Widget : ModuleWidget
 			addChild(createLightCentered<MediumLight<GreenLight> >(mm2px(Vec(rx + 2, y + (i * 4))), module, Some3::L_ACTIVE + i));
 		}
 	}
-	// void appendContextMenu(Menu* menu) override {
-	// 	Some3* module = dynamic_cast<Some3*>(this->module);
-	// 	assert(module);
-	// 	menu->addChild(new MenuSeparator());
-	// 	menu->addChild(createSubmenuItem("Selection V Scaling", "", [=](Menu* menu) {
-	// 		Menu* selectionScalingMenu = new Menu();
-	// 		selectionScalingMenu->addChild(createMenuItem("0 - 1v", CHECKMARK(module->_selectionScaling == 1.f), [module]() { module->_selectionScaling = 1.f; }));
-	// 		selectionScalingMenu->addChild(createMenuItem("0 - 10v", CHECKMARK(module->_selectionScaling == 10.f), [module]() { module->_selectionScaling = 10.f; }));
-	// 		selectionScalingMenu->addChild(createMenuItem("0 - 16v", CHECKMARK(module->_selectionScaling == 16.f), [module]() { module->_selectionScaling = 16.f; }));
-	// 		menu->addChild(selectionScalingMenu);
-	// 	}));
-	// };
 };
 
 Model *modelSome3 = createModel<Some3, Some3Widget>("Some3");
