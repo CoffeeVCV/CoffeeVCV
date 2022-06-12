@@ -133,6 +133,28 @@ struct Some3 : Module
 		return r;
 	}
 
+	float getOutput(int channel) {
+		if(inputs[I_CV].isConnected()) {
+			if(inputs[I_CV].isMonophonic()) {
+				// send this to all the outputs
+				return inputs[I_CV].getVoltage();
+			} else {
+				//try and map the channels
+				if(inputs[I_CV].getChannels()>=channel) {
+					return inputs[I_CV].getVoltage(channel);
+				}	else {
+					// just send 10v for the rest
+					return 10.f;
+				}
+				return inputs[I_CV].getPolyVoltage(channel);
+			}
+		} else { //nothing connected return 10v
+			return 10.f;
+		}
+	}
+
+
+
 	void process(const ProcessArgs &args) override
 	{
 		//reset trigger and button triggers
@@ -256,7 +278,6 @@ struct Some3 : Module
 			_selectionLength = _selectionEnd - _selectionStart;
 			outputs[O_CV].setChannels(NUM_CHANNELS);
 
-
 			// DEBUG("Selection Start: %d", _selectionStart);
 			// DEBUG("Selection End: %d", _selectionEnd);
 			// DEBUG("Selection Length: %d", _selectionLength);
@@ -308,7 +329,8 @@ struct Some3 : Module
 				{
 					// start output
 					// DEBUG("Start output %d", i);
-					outputs[O_CV].setVoltage(10.f, i);
+					float v=getOutput(i);
+					outputs[O_CV].setVoltage(v, i);
 				}
 			}
 		}
