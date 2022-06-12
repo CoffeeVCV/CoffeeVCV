@@ -104,20 +104,14 @@
       ]
     },
     {
-      "slug": "test",
-      "name": "test",
-      "description": "",
-      "tags": []
-    },
-    {
       "slug": "Tap",
       "name": "Tap",
       "description": "",
       "tags": []
     },
     {
-      "slug": "Empower",
-      "name": "Empower",
+      "slug": "Juice",
+      "name": "Juice",
       "description": "",
       "tags": []
     }
