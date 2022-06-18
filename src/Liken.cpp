@@ -95,7 +95,7 @@ struct Liken : Module
 		// check trigger input and trigger button
 		bool triggered = _sampleTrigger.process(inputs[I_TRIG].getVoltage());
 		bool trigButtonPressed = _buttonTrigger.process(params[P_TRIGBUTTON].getValue());
-		
+
 		float modInV[NUMsetS];
 		for (int i = 0; i < NUMsetS; i++)
 		{
@@ -104,25 +104,24 @@ struct Liken : Module
 			modInV[i] = inputs[I_CV + i].getVoltage();
 		}
 
-		// check if _sample or hold
-		//bool trackhold = params[P_SRCTRACKHOLDSWITCH].getValue();
 		// if hold and triggerd take a _sample
 		if (inputs[I_TRIG].isConnected())
 		{
 			if (_ready && (triggered || trigButtonPressed))
 			{
-				DEBUG("HOLD");
 				_ready = false;
 				_sample = inputs[I_SOURCECV].getVoltage();
 			}
-		} else{ // just take a _sample
+		}
+		else
+		{ // just take a _sample
 			_sample = inputs[I_SOURCECV].getVoltage();
 		}
 		_ready = !_sampleTrigger.isHigh();
 
 		if (_sample != _lastsample)
 		{
-			// _lastsample=sample;
+			_lastsample=_sample;
 			// if threshold input is connect use it otherwise use the param
 			float threshold = inputs[I_THRESHOLD].isConnected() ? inputs[I_THRESHOLD].getVoltage() : params[P_THRESHOLD].getValue();
 			// check if _sample is higher or lower then threshold
@@ -166,36 +165,37 @@ struct LikenWidget : ModuleWidget
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5)), module, Liken::P_TRIGBUTTON));
 
 		// input source
-		y += sy+5;
+		y += sy + 5;
 		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Liken::I_SOURCECV));
 
 		// threshold input and param
-		y += sy ;
+		y += sy;
 		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Liken::I_THRESHOLD));
-		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y+sy)), module, Liken::P_THRESHOLD));
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy)), module, Liken::P_THRESHOLD));
 
-		y += (sy * 3)-5 ;
+		y += (sy * 3) - 5;
 		for (int i = 0; i < NUMsetS; i++)
 		{
 			// Raplacement A input, offset, scale and switch
 			y = (sy * 6) - 0;
 			x = (i == 0) ? rx : lx;
-			addChild(createLightCentered<MediumLight<OrangeLight> >(mm2px(Vec(x, y )), module, Liken::L_Active + i));
-			y+=sy-2.5;
+			addChild(createLightCentered<MediumLight<OrangeLight> >(mm2px(Vec(x, y)), module, Liken::L_Active + i));
+			y += sy - 2.5;
 			addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Liken::I_CV + i));
-			y+=7.5;
+			y += 7.5;
 			addParam(createParamCentered<CoffeeSwitch2PosHori>(mm2px(Vec(x, y)), module, Liken::P_MODSWITCH + i));
-			y+=sy-2.5;;	
+			y += sy - 2.5;
+			;
 			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Liken::P_OFFSET + i));
-			y+=sy-2.5;
+			y += sy - 2.5;
 			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Liken::P_SCALE + i));
-			y+=sy;
+			y += sy;
 			addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Liken::O_TRIG + i));
 		}
 
 		// output
 		x = mx;
-		y = yOffset + (sy * 10)+2.5;
+		y = yOffset + (sy * 10) + 2.5;
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Liken::O_CV));
 	}
 };
