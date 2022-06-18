@@ -122,6 +122,12 @@
       "name": "Some3",
       "description": "",
       "tags": []
+    },
+    {
+      "slug": "Juice",
+      "name": "Juice",
+      "description": "",
+      "tags": []
     }
   ]
 }
