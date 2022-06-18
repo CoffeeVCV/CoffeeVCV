@@ -123,6 +123,7 @@ struct Juice : Module
 	bool prevTriggerReady = true;
 	bool nextTriggerReady = true;
 	bool randomTriggerReady = true;
+	bool _polyphonic = false;
 
 	Juice()
 	{
@@ -143,7 +144,6 @@ struct Juice : Module
 		configInput(I_PREVACTIVE, "Prev Active");
 		configInput(I_NEXTACTIVE, "Next Active");
 		_lowPriorityDivider.setDivision(16);
-		inputs[O_CV1+0].setChannels(NUM_ROWS);
 
 	}
 
@@ -197,10 +197,16 @@ struct Juice : Module
 	}
 
 	void output(){
+		if(_polyphonic) {
+			outputs[O_CV1+0].setChannels(NUM_ROWS);
+		}
 		for (int i = 0; i < NUM_ROWS; i++)
 		{
-			outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue());
-			outputs[O_CV1 + 0].setVoltage(params[P_V + i].getValue(),i);
+			if(_polyphonic) {
+				outputs[O_CV1 + 0].setVoltage(params[P_V + i].getValue(),i);
+			} else {
+				outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue());
+			}
 		}
 	}
 
@@ -425,6 +431,23 @@ struct JuiceWidget : ModuleWidget
 		display->module = module;
 		addChild(display);
 	}
+
+	void appendContextMenu(Menu* menu) override {
+		Juice* module = dynamic_cast<Juice*>(this->module);
+		assert(module);
+		menu->addChild(new MenuSeparator());
+		menu->addChild(createSubmenuItem("Polyphonic", "", [=](Menu* menu) {
+			Menu* polyphonicMenu = new Menu();
+			polyphonicMenu->addChild(createMenuItem("Polyphonic", CHECKMARK(module->_polyphonic == true), [module]() { module->_polyphonic = true; }));
+			polyphonicMenu->addChild(createMenuItem("Monophonic", CHECKMARK(module->_polyphonic == false), [module]() { module->_polyphonic = false; }));
+			menu->addChild(polyphonicMenu);
+		}));
+	};
+
+
+
+
+
 };
 
 Model *modelJuice = createModel<Juice, JuiceWidget>("Juice");
