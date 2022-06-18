@@ -143,6 +143,8 @@ struct Juice : Module
 		configInput(I_PREVACTIVE, "Prev Active");
 		configInput(I_NEXTACTIVE, "Next Active");
 		_lowPriorityDivider.setDivision(16);
+		inputs[O_CV1+0].setChannels(NUM_ROWS);
+
 	}
 
 	void onRandomize() override
@@ -194,11 +196,20 @@ struct Juice : Module
 		}
 	}
 
+	void output(){
+		for (int i = 0; i < NUM_ROWS; i++)
+		{
+			outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue());
+			outputs[O_CV1 + 0].setVoltage(params[P_V + i].getValue(),i);
+		}
+	}
+
 	void process(const ProcessArgs &args) override
 	{
-		float selectVoltage = inputs[I_SELECT].getVoltage();
-		if (selectVoltage > 0)
+		//check if input select is being used
+		if (inputs[I_SELECT].isConnected())
 		{
+			float selectVoltage = inputs[I_SELECT].getVoltage();
 			// convert voltage to selection
 			int selection = clamp(int(selectVoltage), 1, NUM_SLOTS) - 1;
 			if (selection != _presetControl.currentSlot)
@@ -208,12 +219,14 @@ struct Juice : Module
 			}
 		}
 
+		//check if input random active is being triggers
 		bool doRandom = true;
 		doRandom &= randomTriggerReady;
 		doRandom &= _randomActiveTrigger.process(inputs[I_RANDOMACTIVE].getVoltage());
 		doRandom |= _randomActiveButtonTrigger.process(params[P_RANDOMACTIVEBUTTON].getValue());
 		if (doRandom)
 		{
+			//just cointoss up or down
 			if (random::uniform() > 0.5)
 			{
 				_presetControl.nextActiveSlot();
@@ -226,6 +239,7 @@ struct Juice : Module
 		}
 		randomTriggerReady = !_randomActiveTrigger.isHigh();
 
+		//select next active slot
 		if (nextTriggerReady & _nextActiveTrigger.process(inputs[I_NEXTACTIVE].getVoltage()))
 		{
 			_presetControl.nextActiveSlot();
@@ -233,6 +247,7 @@ struct Juice : Module
 		}
 		nextTriggerReady = (!_nextActiveTrigger.isHigh());
 
+		//select prev active slot
 		if (prevTriggerReady & _prevActiveTrigger.process(inputs[I_PREVACTIVE].getVoltage()))
 		{
 			_presetControl.prevActiveSlot();
@@ -242,7 +257,6 @@ struct Juice : Module
 
 		if (_lowPriorityDivider.process())
 		{
-
 			if (_saveButtonTrigger.process(params[P_SAVEBUTTON].getValue()))
 			{
 				_presetControl.saveSlot(params);
@@ -279,10 +293,7 @@ struct Juice : Module
 
 		if (_presetControl.changed)
 		{
-			for (int i = 0; i < NUM_ROWS; i++)
-			{
-				outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue());
-			}
+			output();
 			_presetControl.changed = false;
 		}
 	}
