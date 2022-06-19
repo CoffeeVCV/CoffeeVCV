@@ -22,3 +22,5 @@ extern Model* modelTap;
 extern Model* modelLiken;
 extern Model* modelSome3;
 extern Model* modelJuice;
+extern Model* modelTwinned2;
+
