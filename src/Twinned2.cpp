@@ -24,9 +24,9 @@ struct Twinned2 : Module
 		P_TRIGBUTTON,
 		P_RESETBUTTON,
 		P_STEPSELECT,
-		ENUMS(P_CV1, NUM_STEPS * 2),
+		ENUMS(P_CV1, NUM_STEPS * NUM_SEQS),
 		ENUMS(P_PROB, NUM_STEPS),
-		ENUMS(P_GATE, NUM_STEPS * 2),
+		ENUMS(P_GATE, NUM_STEPS * NUM_SEQS),
 		PARAMS_LEN
 	};
 
@@ -34,8 +34,8 @@ struct Twinned2 : Module
 	{
 		I_CLOCK,
 		I_RESET,
-		ENUMS(I_CV, NUM_STEPS * 2),
-		ENUMS(I_GATE, NUM_STEPS * 2),
+		ENUMS(I_CV, NUM_SEQS),
+		ENUMS(I_GATE, NUM_SEQS),
 		INPUTS_LEN
 	};
 
@@ -48,7 +48,6 @@ struct Twinned2 : Module
 		O_BGATE,
 		O_AGATE,
 		O_GATE,
-		ENUMS(O_GATES, NUM_STEPS * 2),
 		OUTPUTS_LEN
 	};
 
@@ -89,23 +88,24 @@ struct Twinned2 : Module
 
 		configParam(P_STEPSELECT, 1.f, NUM_STEPS, NUM_STEPS, "Steps");
 		paramQuantities[P_STEPSELECT]->snapEnabled = true;
-
 		for (int i = 0; i < NUM_STEPS; i++)
 		{
 			configParam(P_CV1 + i, 0.f, 1.f, 0.5f, string::f("Step A 1v %d", i + 1));
 			configParam(P_CV1 + NUM_STEPS + i, 0.f, 10.f, 0.5f, string::f("Step B %d", i + 1));
 
 			configParam(P_PROB + i, -0.f, 1.f, 0.5f, string::f("Prob %d", i + 1));
-			configInput(I_CV + i, string::f("CV A %d", i + 1));
-			configInput(I_CV + i + NUM_STEPS, string::f("CV B %d", i + 1));
 
 			//gates
-			configInput(I_GATE + i, string::f("Gate A %d", i + 1));
 			configParam(P_GATE + i, 0.f, 1.f, 0.f, string::f("Gate A %d", i + 1));
 			configParam(P_GATE + i + NUM_STEPS, 0.f, 1.f, 0.f, string::f("Gate B %d", i + 1));
-			configOutput(O_GATES + i, string::f("Gate A %d", i + 1));
-			configOutput(O_GATES + i + NUM_STEPS, string::f("Gate B %d", i + 1));
 		}
+
+		configInput(I_CV + 0, "CV A");
+		configInput(I_CV + 1, "CV B");
+		configInput(I_GATE + 0, "GATES A");
+		configInput(I_GATE + 1, "GATES B");		
+
+
 		configOutput(O_CVWINNER, "CV2 Winner Out");
 		configOutput(O_CVA, "CV A Out");
 		configOutput(O_CVB, "CV B Out");
@@ -130,22 +130,19 @@ struct Twinned2 : Module
 
 	float getCVOut(int step, int ab)
 	{
-		// A. Input is connected - use it
-		// B. Input is not connected, but CV 0 or 8 is connected and polyphonic
-		//    Use it if it maps 1:1 to the step
-		// C. Input is not connected, but CV 0 or 8 is connected and not polyphonic - use the knobs
 		float cv;
-		if(inputs[I_CV + step + ab].isConnected())
+		int i=(ab>0)?1:0;
+		bool usePoly=true;
+		usePoly &= inputs[I_CV + i].isConnected();
+		usePoly &= inputs[I_CV + i].isPolyphonic();
+		usePoly &= inputs[I_CV + i].getChannels() >= step;
+
+		if(usePoly)
 		{
-			// A. Input is connected - use it
-			cv=inputs[I_CV + step + ab].getVoltage();
+			cv = inputs[I_CV + i].getPolyVoltage(step);
 		}
-		else if(inputs[I_CV + 0 + ab].isPolyphonic() && inputs[I_CV + 0 + ab].getChannels()>=step){
-			// B. Input is not connected, but CV 0 or 8 is connected and polyphonic
-			// are there enough channels to map the step?
-			cv=inputs[I_CV + 0 + ab].getPolyVoltage(step);
-		} else {
-			// C. Input is not connected, but CV 0 or 8 is connected and not polyphonic - use the knobs
+		else
+		{
 			cv=params[P_CV1 + step + ab].getValue();
 		}
 		return cv;
@@ -156,16 +153,15 @@ struct Twinned2 : Module
 	void process(const ProcessArgs &args) override
 	{
 		//calculate tempo
-		if(_lastframe<0)
+		if (_lastframe > 0)
 		{
-			_lastframe=args.frame;
-		} else {
-			_tempo=(args.frame-_lastframe)/args.sampleRate;
-			_lastframe=args.frame;
-			DEBUG("Tempo: %f",_tempo);
+			float delta = args.frame - _lastframe;
+			float rate = delta / args.sampleRate;
+			_tempo = 60 / rate;
+			//DEBUG("Tempo: %f",_tempo);				
 		}
-		
-		
+		_lastframe = args.frame;
+
 		_num_steps=paramQuantities[P_STEPSELECT]->getValue();
 		
 		//clock trigger and button
@@ -235,32 +231,32 @@ struct Twinned2Widget : ModuleWidget
 
 		// add cv inputs, cv1 and cv2 and prob knobs
 		x=mx;
-		float x1,x2;
+
+		//poly inputs CV
+		y=yOffset+sy;
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x-sx, y)), module, Twinned2::I_CV + 0));
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x+sx, y)), module, Twinned2::I_CV + 1));
+
+		//poly inputs GATES
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x-sx*2, y)), module, Twinned2::I_GATE + 0));
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x+sx*2, y)), module, Twinned2::I_GATE + 1));
+
 		for(int i=0; i<NUM_STEPS; i++){
-			y=yOffset+sy+(sy*i) ;
+			y=yOffset+sy+sy+(sy*i) ;
 			//prob
 			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Twinned2::P_PROB + i));
 			//lights
 			addChild(createLightCentered<SmallLight<OrangeLight>>(mm2px(Vec(x-3.5, y+3.5)), module, Twinned2::L_STEP + i));
 			addChild(createLightCentered<SmallLight<OrangeLight>>(mm2px(Vec(x+3.5, y+3.5)), module, Twinned2::L_STEP + NUM_STEPS + i));
-			//inputs
-			addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x-sx, y)), module, Twinned2::I_CV + i));
-			addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x+sx, y)), module, Twinned2::I_CV + i + NUM_STEPS));
 			//cv1
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x+2-sx*2, y)), module, Twinned2::P_CV1 + i));
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x-2+sx*2, y)), module, Twinned2::P_CV1 + i + NUM_STEPS));
-			//gate inputs
-			addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x-sx*3, y)), module, Twinned2::I_GATE + i));
-			addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x+sx*3, y)), module, Twinned2::I_GATE + i + NUM_STEPS));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x-sx, y)), module, Twinned2::P_CV1 + i));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x+sx, y)), module, Twinned2::P_CV1 + i + NUM_STEPS));
 			//gate knobs
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x-sx*4, y)), module, Twinned2::P_GATE + i));
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x+sx*4, y)), module, Twinned2::P_GATE + i + NUM_STEPS));
-			//gate outputs
-			addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x-sx*5, y)), module, Twinned2::O_GATES + i));
-			addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x+sx*5, y)), module, Twinned2::O_GATES + i + NUM_STEPS));
-
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x-sx*2, y)), module, Twinned2::P_GATE + i));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x+sx*2, y)), module, Twinned2::P_GATE + i + NUM_STEPS));
 		}
-		y=yOffset+sy+(sy*NUM_STEPS) ;
+
+		y=yOffset+sy+sy+(sy*NUM_STEPS) ;
 		//cv winner output
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Twinned2::O_CVWINNER));
 		//cv outputs
@@ -268,8 +264,8 @@ struct Twinned2Widget : ModuleWidget
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x+sx, y)), module, Twinned2::O_CVB));
 
 		//gate outputs
-		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x-sx*5, y)), module, Twinned2::O_AGATE));
-		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x+sx*5, y)), module, Twinned2::O_BGATE));
+		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x-sx*2, y)), module, Twinned2::O_AGATE));
+		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x+sx*2, y)), module, Twinned2::O_BGATE));
 
 
 
