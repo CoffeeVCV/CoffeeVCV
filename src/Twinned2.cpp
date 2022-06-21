@@ -12,7 +12,7 @@
 // [x] TODO - add main steps lights
 // [x] TODO - add probability knob
 // [x] TODO - add probability lights 
-// [ ] TODO - add gates knob and input for both sets
+// [ ] TODO - add gates knob, and make gates a poly output
 // [ ] TODO - add polyphonic input for both sets
 
 
@@ -71,6 +71,7 @@ struct Twinned2 : Module
 	dsp::SchmittTrigger _clockTrigger;
 	dsp::PulseGenerator _eocPulse;
 	dsp::Timer _gateTimer[NUM_STEPS*2];
+	dsp::Timer _gate;
 	float _tempo=0;
 	float _lastframe=-1;	
 	int _step = -1;
@@ -96,8 +97,8 @@ struct Twinned2 : Module
 			configParam(P_PROB + i, -0.f, 1.f, 0.5f, string::f("Prob %d", i + 1));
 
 			//gates
-			configParam(P_GATE + i, 0.f, 1.f, 0.f, string::f("Gate A %d", i + 1));
-			configParam(P_GATE + i + NUM_STEPS, 0.f, 1.f, 0.f, string::f("Gate B %d", i + 1));
+			configParam(P_GATE + i, 0.f, 1.f, 0.5f, string::f("Gate A %d", i + 1));
+			configParam(P_GATE + i + NUM_STEPS, 0.5f, 1.f, 0.f, string::f("Gate B %d", i + 1));
 		}
 
 		configInput(I_CV + 0, "CV A");
@@ -153,14 +154,14 @@ struct Twinned2 : Module
 	void process(const ProcessArgs &args) override
 	{
 		//calculate tempo
-		if (_lastframe > 0)
+		if (_lowPriority.process() && _lastframe > 0)
 		{
 			float delta = args.frame - _lastframe;
 			float rate = delta / args.sampleRate;
-			_tempo = 60 / rate;
-			//DEBUG("Tempo: %f",_tempo);				
+			_tempo = 60 * rate;
+			DEBUG("Delta: %f, Rate:%f, Tempo: %f",delta,rate,_tempo);
+			
 		}
-		_lastframe = args.frame;
 
 		_num_steps=paramQuantities[P_STEPSELECT]->getValue();
 		
@@ -174,6 +175,19 @@ struct Twinned2 : Module
 		}
 		_ready=!_clockTrigger.isHigh();
 
+		//check gate timers and close any expired gates
+		
+		for (int i = 0; i < NUM_STEPS; i++)
+		{
+			bool gate = _gateTimer[i].process(args.sampleTime) > params[P_GATE + i].getValue();
+			outputs[O_AGATE].setVoltage(0.f);
+
+			gate = _gateTimer[i + B].process(args.sampleTime) > params[P_GATE + i + B].getValue();
+			outputs[O_BGATE].setVoltage(0.f);
+		}
+
+
+
 		//do step stuff
 		if(_lastStep!=_step)
 		{
@@ -185,6 +199,15 @@ struct Twinned2 : Module
 
 			outputs[O_CVA].setVoltage(getCVOut(_step, A));
 			outputs[O_CVB].setVoltage(getCVOut(_step, B));
+
+			//gate timers
+			_gateTimer[_step+A].reset();
+			_gateTimer[_step+B].reset();
+
+			//open gates
+			outputs[O_GATE].setVoltage(params[P_GATE+_step+ab].getValue());
+			outputs[O_AGATE].setVoltage(params[P_GATE+_step+A].getValue());
+			outputs[O_BGATE].setVoltage(params[P_GATE+_step+B].getValue());
 
 			lights[L_STEP+_lastStep].setBrightness(0.0f);
 			lights[L_STEP+_lastStep+NUM_STEPS].setBrightness(0.0f);
@@ -264,8 +287,15 @@ struct Twinned2Widget : ModuleWidget
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x+sx, y)), module, Twinned2::O_CVB));
 
 		//gate outputs
-		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x-sx*2, y)), module, Twinned2::O_AGATE));
-		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x+sx*2, y)), module, Twinned2::O_BGATE));
+		y=yOffset+(sy*NUM_STEPS) ;
+		x+=sx*4;
+		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Twinned2::O_AGATE));
+		y+=sy;
+		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Twinned2::O_BGATE));
+		y+=sy;
+		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Twinned2::O_GATE));
+
+
 
 
 
