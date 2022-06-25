@@ -12,8 +12,10 @@
 // [x] TODO - add main steps lights
 // [x] TODO - add probability knob
 // [x] TODO - add probability lights
-// [ ] TODO - add gates knob, and make gates a poly output
-// [ ] TODO - add polyphonic input for both sets
+// [x] TODO - add gates knob, and make gates a poly output
+// [x] TODO - add polyphonic input for both sets
+// [ ] TODO - add menu to copy from A to B, or b to A
+// [ ] TODO - add button to randomise A or B
 
 struct Twinned2 : Module
 {
@@ -75,10 +77,11 @@ struct Twinned2 : Module
 	float _lastframe = -1;
 	int _step = -1;
 	int _lastStep = -1;
-	int _lastWinner = 0;
+	int _lastAB = 0;
 	int _num_steps = -1;
 	bool _ready = true;
-	int _ab=A;
+	int _ab = A;
+	bool _polyGates = false;
 
 	Twinned2()
 	{
@@ -117,7 +120,7 @@ struct Twinned2 : Module
 		configOutput(O_AGATE, "A Gate");
 		configOutput(O_BGATE, "B Gate");
 
-		_lowPriority.setDivision(16);
+		_lowPriority.setDivision(64);
 		_ready = true;
 		_step = 0;
 		_lastStep = 0;
@@ -158,9 +161,20 @@ struct Twinned2 : Module
 			_num_steps = params[P_STEPSELECT].getValue();
 			_step = 0;
 			_lastStep = 0;
+			for(int i = 0; i < NUM_STEPS * 2; i++)
+			{
+				lights[L_STEP + i].setBrightness(0.f);
+			}
+		}
+
+		if(_polyGates) {
 			outputs[O_AGATE].setChannels(_num_steps);
 			outputs[O_BGATE].setChannels(_num_steps);
 			outputs[O_GATE].setChannels(_num_steps);
+		} else {
+			outputs[O_AGATE].setChannels(1);
+			outputs[O_BGATE].setChannels(1);
+			outputs[O_GATE].setChannels(1);
 		}
 
 		// clock trigger and button
@@ -171,89 +185,102 @@ struct Twinned2 : Module
 			_step = (_step + 1) % _num_steps;
 			_ready = false;
 
-			// calculate tempo
+			// calculate tempo, so that we can calculate the gate time
 			if (_lastframe > 0)
 			{
 				float delta = args.frame - _lastframe;
 				float rate = delta / args.sampleRate;
 				_tempo = 60 / rate;
-				// DEBUG("Delta: %f, Rate:%f, Tempo: %f",delta,rate,_tempo);
 			}
 			_lastframe = args.frame;
 		}
 		_ready = !_clockTrigger.isHigh();
 
-		//check eoc
+		// check eoc
 		bool eoc = _eocPulse.process(args.sampleTime);
-		outputs[O_EOC].setVoltage( (eoc)? 10.f : 0.f);
+		outputs[O_EOC].setVoltage((eoc) ? 10.f : 0.f);
 
 		// check gate timers and close any expired gates
-		for (int i = 0; i < _num_steps; i++)
+		for (int j = 0; j < 2; j++)
 		{
-			for(int j = 0; j < 2; j++){
-				int g=i+(j*NUM_STEPS);
-				
-				float t, v;
-				t = _gateTimer[g].process(args.sampleTime);
-				// gate param is a percentage of a beat
-				v = params[P_GATE + g].getValue() * (_tempo / 60);
-				// if(!agate) DEBUG("Gate %d: %f, %f", i, t, v);
-				bool timerExpired=t>v;
-				if(j==0) {
-					outputs[O_AGATE].setVoltage((timerExpired) ? 0 : 10, i);
-				}else{
-					outputs[O_BGATE].setVoltage((timerExpired) ? 0 : 10, i);
-				}
+			// first As then Bs
+			for (int i = 0; i < _num_steps; i++)
+			{
+				int g = i + (j * NUM_STEPS);
 
-				if (i == _lastStep && timerExpired)
-				{
-					outputs[O_GATE].setVoltage(0.f, i + _lastWinner);				
+				// // gates's elapsed time
+				float timeElapsed = _gateTimer[g].process(args.sampleTime);
+				// // gate param is a percentage of a beat
+				float targetTime = params[P_GATE + g].getValue() / (_tempo / 60);
+				bool timerExpired = timeElapsed >= targetTime;
+				// //if(!timerExpired) 
+				// 	//DEBUG("gate %d: %f / %f", g, timeElapsed, targetTime);
+				
+				if(timerExpired){
+					int channel = (_polyGates) ? i : 0;
+					int ABGate = (j == A) ? O_AGATE : O_BGATE;
+
+				 	if(_polyGates || i==_step){
+				 		outputs[ABGate].setVoltage(0, channel);
+				 	}
+
+					//if this is the last winning sequence's gate expiring
+					if (j*NUM_STEPS == _lastAB && i==_lastStep)
+					{
+						outputs[O_GATE].setVoltage(0,channel );
+					}
 				}
 			}
 		}
-
 
 		// do step stuff
 		if (_lastStep != _step)
 		{
 			int ab;
-			if(inputs[I_ABSELECT].isConnected()){
-				ab=(inputs[I_ABSELECT].getVoltage() < params[P_ABTHRESHOLD].getValue() ) ? A : B;
-			} else {
+			if (inputs[I_ABSELECT].isConnected())
+			{
+				ab = (inputs[I_ABSELECT].getVoltage() < params[P_ABTHRESHOLD].getValue()) ? A : B;
+			}
+			else
+			{
 				float prob = params[P_PROB + _step].getValue();
 				ab = (prob < random::uniform()) ? A : B;
 			}
-
-
 
 			float cvOut = getCVOut(_step, ab);
 			outputs[O_CVWINNER].setVoltage(cvOut);
 			outputs[O_CVA].setVoltage(getCVOut(_step, A));
 			outputs[O_CVB].setVoltage(getCVOut(_step, B));
 
-			// gate timers
+			// start gate timers
 			_gateTimer[_step + A].reset();
 			_gateTimer[_step + B].reset();
 
 			// open gates
-			outputs[O_GATE].setVoltage(10.f, _step);
-			outputs[O_AGATE].setVoltage(10.f, _step);
-			outputs[O_BGATE].setVoltage(10.f, _step);
+		
+			int channel = (_polyGates) ? _step : 0;
+			//DEBUG("channel %d", channel);
+			outputs[O_GATE].setVoltage(10.f, channel);
+			outputs[O_AGATE].setVoltage(10.f, channel);
+			outputs[O_BGATE].setVoltage(10.f, channel);
 
-			// lights
+			// lights on
 			lights[L_STEP + _step + ab].setBrightness(1.f);
+
+			//lights off
 			lights[L_STEP + _lastStep].setBrightness(0.0f);
 			lights[L_STEP + _lastStep + NUM_STEPS].setBrightness(0.0f);
 
-			//end of cycle
-			if(_step==_num_steps-1){
+			// end of cycle
+			if (_step == _num_steps - 1)
+			{
 				outputs[O_EOC].setVoltage(10.f);
 				_eocPulse.trigger(1e-3);
 			}
 
 			// next step
 			_lastStep = _step;
-			_lastWinner = ab;
+			_lastAB = ab;
 		}
 	}
 };
@@ -270,30 +297,29 @@ struct Twinned2Widget : ModuleWidget
 		float sx = 10;
 		float yOffset = 15;
 		float xOffset = 10;
-		float mx = 70.96/2;
+		float mx = 70.96 / 2;
 		float x = xOffset;
 		float y = yOffset;
 
-		x=mx-(sx*3);
+		x = mx - (sx * 3);
 		// clock trig input and button
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y)), module, Twinned2::I_CLOCK));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5)), module, Twinned2::P_TRIGBUTTON));
 
 		// reset trig and button
-		//x += sx;
-		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y+sy)), module, Twinned2::I_RESET));
-		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5+sy)), module, Twinned2::P_RESETBUTTON));
+		// x += sx;
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y + sy)), module, Twinned2::I_RESET));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5 + sy)), module, Twinned2::P_RESETBUTTON));
 
 		// num steps stepped knob
-		//x += sx;
-		x=mx;
-		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y+sy)), module, Twinned2::P_STEPSELECT));
+		// x += sx;
+		x = mx - (sx * 3);
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy+sy)), module, Twinned2::P_STEPSELECT));
 
 		// threshold input and knob
-		x += sx;
+		x = mx;
 		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Twinned2::I_ABSELECT));
-		x += sx;
-		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y)), module, Twinned2::P_ABTHRESHOLD));
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y+sy)), module, Twinned2::P_ABTHRESHOLD));
 
 		// add cv inputs, cv1 and cv2 and prob knobs
 		x = mx;
@@ -331,7 +357,7 @@ struct Twinned2Widget : ModuleWidget
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x + sx, y)), module, Twinned2::O_CVB));
 
 		// gate outputs
-		y = yOffset + (sy * NUM_STEPS)-sy;
+		y = yOffset + (sy * NUM_STEPS) - sy;
 		x += sx * 3;
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Twinned2::O_AGATE));
 		y += sy;
@@ -341,8 +367,19 @@ struct Twinned2Widget : ModuleWidget
 		// end of cycle output
 		y += sy;
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Twinned2::O_EOC));
-
 	}
+	void appendContextMenu(Menu *menu) override
+	{
+		Twinned2 *module = dynamic_cast<Twinned2 *>(this->module);
+		assert(module);
+		menu->addChild(new MenuSeparator());
+		menu->addChild(createSubmenuItem("Polyphonic Channels", "", [=](Menu *menu)
+										 {
+			Menu* PolySelectMenu = new Menu();
+			PolySelectMenu->addChild(createMenuItem("Monophonic Gate", CHECKMARK(module->_polyGates == false), [module]() { module->_polyGates = false; }));
+			PolySelectMenu->addChild(createMenuItem("Polyphonic Gate", CHECKMARK(module->_polyGates == true), [module]() { module->_polyGates = true; }));
+			menu->addChild(PolySelectMenu); }));
+	};
 };
 
 Model *modelTwinned2 = createModel<Twinned2, Twinned2Widget>("Twinned2");
