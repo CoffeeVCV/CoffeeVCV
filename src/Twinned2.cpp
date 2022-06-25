@@ -28,6 +28,8 @@ struct Twinned2 : Module
 		ENUMS(P_CV1, NUM_STEPS *NUM_SEQS),
 		ENUMS(P_PROB, NUM_STEPS),
 		ENUMS(P_GATE, NUM_STEPS *NUM_SEQS),
+		P_RANDOMIZESCALE,
+		ENUMS(P_RANDBUTTON, NUM_SEQS * 2),
 		PARAMS_LEN
 	};
 
@@ -38,6 +40,7 @@ struct Twinned2 : Module
 		I_ABSELECT,
 		ENUMS(I_CV, NUM_SEQS),
 		ENUMS(I_GATE, NUM_SEQS),
+		ENUMS(I_RAND, NUM_SEQS * 2),
 		INPUTS_LEN
 	};
 
@@ -65,7 +68,26 @@ struct Twinned2 : Module
 		B = 8
 	};
 
+	enum actions
+	{
+		CVA2B,
+		CVB2A,
+		GA2B,
+		GB2A
+	};
+
+	enum RANDCONTROLS
+	{
+		CVA,
+		CVB,
+		GATEA,
+		GATEB
+	};
+
 	dsp::ClockDivider _lowPriority;
+	dsp::BooleanTrigger _randButtons[NUM_SEQS * 2];
+	dsp::SchmittTrigger _randTrigger[NUM_SEQS * 2];
+	;
 	dsp::BooleanTrigger _resetButton;
 	dsp::BooleanTrigger _clockButton;
 	dsp::SchmittTrigger _resetTrigger;
@@ -82,6 +104,7 @@ struct Twinned2 : Module
 	bool _ready = true;
 	int _ab = A;
 	bool _polyGates = false;
+	int _copyAction = -1;
 
 	Twinned2()
 	{
@@ -90,10 +113,10 @@ struct Twinned2 : Module
 		configButton(P_RESETBUTTON, "Reset");
 		configInput(I_CLOCK, "Clock");
 		configInput(I_RESET, "Reset");
-
+		configParam(P_RANDOMIZESCALE, 0.f, 1.f, 0.5f, "Randomize Ammount", "%", 0.f, 100.f);
 		configParam(P_STEPSELECT, 1.f, NUM_STEPS, NUM_STEPS, "Steps");
 		paramQuantities[P_STEPSELECT]->snapEnabled = true;
-		configParam(P_ABTHRESHOLD, 0.f, 10.f, 0.f, "AB Threshold");
+		configParam(P_ABTHRESHOLD, 0.f, 10.f, 5.f, "AB Threshold");
 		for (int i = 0; i < NUM_STEPS; i++)
 		{
 			configParam(P_CV1 + i, 0.f, 10.f, 0.5f, string::f("Step A %d", i + 1));
@@ -105,6 +128,16 @@ struct Twinned2 : Module
 			configParam(P_GATE + i, 0.f, 1.f, 0.5f, string::f("Gate A %d", i + 1), "%", 0.f, 100.0f);
 			configParam(P_GATE + i + NUM_STEPS, 0.f, 1.f, 0.5f, string::f("Gate B %d", i + 1), "%", 0.f, 100.0f);
 		}
+
+		configButton(P_RANDBUTTON + CVA, "Randomize A CV");
+		configButton(P_RANDBUTTON + CVB, "Randomize B CV");
+		configButton(P_RANDBUTTON + GATEA, "Randomize A Gates");
+		configButton(P_RANDBUTTON + GATEB, "Randomize B Gates");
+
+		configInput(I_RAND + CVA, "Randomize A CV");
+		configInput(I_RAND + CVB, "Randomize B CV");
+		configInput(I_RAND + GATEA, "Randomize A Gates");
+		configInput(I_RAND + GATEB, "Randomize B Gates");
 
 		configInput(I_ABSELECT, "AB Select");
 		configInput(I_CV + 0, "CV A");
@@ -120,7 +153,7 @@ struct Twinned2 : Module
 		configOutput(O_AGATE, "A Gate");
 		configOutput(O_BGATE, "B Gate");
 
-		_lowPriority.setDivision(64);
+		_lowPriority.setDivision(32);
 		_ready = true;
 		_step = 0;
 		_lastStep = 0;
@@ -154,27 +187,89 @@ struct Twinned2 : Module
 		return cv;
 	}
 
+	float getScaledRandom(ParamQuantity *q, float scale, float oldValue)
+	{
+		float min = q->getMinValue();
+		float max = q->getMaxValue();
+		float range = max - min;
+		float random = random::uniform();
+		float newValue = range * scale * random;
+		newValue = clamp((random::uniform() >= 0.5) ? oldValue + newValue : oldValue - newValue, min, max);
+		return newValue;
+	}
+
 	void process(const ProcessArgs &args) override
 	{
-		if (_num_steps != params[P_STEPSELECT].getValue())
+
+		if (_lowPriority.process())
 		{
-			_num_steps = params[P_STEPSELECT].getValue();
-			_step = 0;
-			_lastStep = 0;
-			for(int i = 0; i < NUM_STEPS * 2; i++)
+
+			if (_num_steps != params[P_STEPSELECT].getValue())
 			{
-				lights[L_STEP + i].setBrightness(0.f);
+				_num_steps = params[P_STEPSELECT].getValue();
+				_step = 0;
+				_lastStep = 0;
+				for (int i = 0; i < NUM_STEPS * 2; i++)
+				{
+					lights[L_STEP + i].setBrightness(0.f);
+				}
+			}
+
+			int channels = (_polyGates) ? _num_steps : 1;
+			outputs[O_AGATE].setChannels(channels);
+			outputs[O_BGATE].setChannels(channels);
+			outputs[O_GATE].setChannels(channels);
+
+			if (_copyAction >= 0)
+			{
+				for (int i = 0; i < NUM_STEPS; i++)
+				{
+					if (_copyAction == CVA2B)
+					{
+						params[P_CV1 + i + B].setValue(params[P_CV1 + i + A].getValue());
+					}
+					else if (_copyAction == CVB2A)
+					{
+						params[P_CV1 + i + A].setValue(params[P_CV1 + i + B].getValue());
+					}
+					else if (_copyAction == GA2B)
+					{
+						params[P_GATE + i + B].setValue(params[P_GATE + i + A].getValue());
+					}
+					else if (_copyAction == GB2A)
+					{
+						params[P_GATE + i + A].setValue(params[P_GATE + i + B].getValue());
+					}
+					_copyAction = -1;
+				}
 			}
 		}
 
-		if(_polyGates) {
-			outputs[O_AGATE].setChannels(_num_steps);
-			outputs[O_BGATE].setChannels(_num_steps);
-			outputs[O_GATE].setChannels(_num_steps);
-		} else {
-			outputs[O_AGATE].setChannels(1);
-			outputs[O_BGATE].setChannels(1);
-			outputs[O_GATE].setChannels(1);
+		//check if any of the randomisation is needed.
+		for (int i = 0; i < NUM_SEQS * 2; i++)
+		{
+			float scale = params[P_RANDOMIZESCALE].getValue();
+			bool buttonPressed = _randButtons[i].process(params[P_RANDBUTTON + i].getValue());
+			bool inputPressed = _randTrigger[i].process(inputs[I_RAND + i].getVoltage());
+			if (buttonPressed || inputPressed)
+			{
+				for (int j = 0; j < NUM_STEPS; j++)
+				{
+					int pid;
+					if (i == CVA)
+						pid = P_CV1 + j;
+					if (i == CVB)
+						pid = P_CV1 + j + NUM_STEPS;
+					if (i == GATEA)
+						pid = P_GATE + j;
+					if (i == GATEB)
+						pid = P_GATE + j + NUM_STEPS;
+					float oldValue = params[pid].getValue();
+					float newValue = getScaledRandom(paramQuantities[pid], scale, oldValue);
+					DEBUG("%s", paramQuantities[pid]->description.c_str());
+					params[pid].setValue(newValue);
+				}
+			}
 		}
 
 		// clock trigger and button
@@ -194,7 +289,6 @@ struct Twinned2 : Module
 			}
 			_lastframe = args.frame;
 		}
-		_ready = !_clockTrigger.isHigh();
 
 		// check eoc
 		bool eoc = _eocPulse.process(args.sampleTime);
@@ -213,21 +307,23 @@ struct Twinned2 : Module
 				// // gate param is a percentage of a beat
 				float targetTime = params[P_GATE + g].getValue() / (_tempo / 60);
 				bool timerExpired = timeElapsed >= targetTime;
-				// //if(!timerExpired) 
+				// //if(!timerExpired)
 				// 	//DEBUG("gate %d: %f / %f", g, timeElapsed, targetTime);
-				
-				if(timerExpired){
+
+				if (timerExpired)
+				{
 					int channel = (_polyGates) ? i : 0;
 					int ABGate = (j == A) ? O_AGATE : O_BGATE;
 
-				 	if(_polyGates || i==_step){
-				 		outputs[ABGate].setVoltage(0, channel);
-				 	}
-
-					//if this is the last winning sequence's gate expiring
-					if (j*NUM_STEPS == _lastAB && i==_lastStep)
+					if (_polyGates || i == _step)
 					{
-						outputs[O_GATE].setVoltage(0,channel );
+						outputs[ABGate].setVoltage(0, channel);
+					}
+
+					// if this is the last winning sequence's gate expiring
+					if (j * NUM_STEPS == _lastAB && i == _lastStep)
+					{
+						outputs[O_GATE].setVoltage(0, channel);
 					}
 				}
 			}
@@ -257,9 +353,9 @@ struct Twinned2 : Module
 			_gateTimer[_step + B].reset();
 
 			// open gates
-		
+
 			int channel = (_polyGates) ? _step : 0;
-			//DEBUG("channel %d", channel);
+			// DEBUG("channel %d", channel);
 			outputs[O_GATE].setVoltage(10.f, channel);
 			outputs[O_AGATE].setVoltage(10.f, channel);
 			outputs[O_BGATE].setVoltage(10.f, channel);
@@ -267,7 +363,7 @@ struct Twinned2 : Module
 			// lights on
 			lights[L_STEP + _step + ab].setBrightness(1.f);
 
-			//lights off
+			// lights off
 			lights[L_STEP + _lastStep].setBrightness(0.0f);
 			lights[L_STEP + _lastStep + NUM_STEPS].setBrightness(0.0f);
 
@@ -314,12 +410,15 @@ struct Twinned2Widget : ModuleWidget
 		// num steps stepped knob
 		// x += sx;
 		x = mx - (sx * 3);
-		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy+sy)), module, Twinned2::P_STEPSELECT));
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy + sy)), module, Twinned2::P_STEPSELECT));
+
+		// randomize scale knob
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy * 3)), module, Twinned2::P_RANDOMIZESCALE));
 
 		// threshold input and knob
 		x = mx;
 		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Twinned2::I_ABSELECT));
-		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y+sy)), module, Twinned2::P_ABTHRESHOLD));
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy)), module, Twinned2::P_ABTHRESHOLD));
 
 		// add cv inputs, cv1 and cv2 and prob knobs
 		x = mx;
@@ -333,6 +432,22 @@ struct Twinned2Widget : ModuleWidget
 		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x - sx * 2, y)), module, Twinned2::I_GATE + 0));
 		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x + sx * 2, y)), module, Twinned2::I_GATE + 1));
 
+		// rand inputs and manula buttons
+		x = mx;
+		y = yOffset;
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x - sx, y)), module, Twinned2::I_RAND + Twinned2::CVA));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x - sx + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::CVA));
+
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x + sx, y)), module, Twinned2::I_RAND + Twinned2::CVB));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + sx + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::CVB));
+
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x - sx - sx, y)), module, Twinned2::I_RAND + Twinned2::GATEA));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x - sx - sx + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::GATEA));
+
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x + sx + sx, y)), module, Twinned2::I_RAND + Twinned2::GATEB));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + sx + sx + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::GATEB));
+
+		x = mx;
 		for (int i = 0; i < NUM_STEPS; i++)
 		{
 			y = yOffset + sy + sy + (sy * i);
@@ -379,6 +494,15 @@ struct Twinned2Widget : ModuleWidget
 			PolySelectMenu->addChild(createMenuItem("Monophonic Gate", CHECKMARK(module->_polyGates == false), [module]() { module->_polyGates = false; }));
 			PolySelectMenu->addChild(createMenuItem("Polyphonic Gate", CHECKMARK(module->_polyGates == true), [module]() { module->_polyGates = true; }));
 			menu->addChild(PolySelectMenu); }));
+		menu->addChild(new MenuSeparator());
+		menu->addChild(createSubmenuItem("Copy values", "", [=](Menu *menu)
+										 {
+			Menu* CopyMenu = new Menu();
+			CopyMenu->addChild(createMenuItem("CV A -> B", CHECKMARK(module->_copyAction == Twinned2::CVA2B), [module]() { module->_copyAction = Twinned2::CVA2B; }));
+			CopyMenu->addChild(createMenuItem("CV B -> A", CHECKMARK(module->_copyAction == Twinned2::CVB2A), [module]() { module->_copyAction = Twinned2::CVB2A; }));
+			CopyMenu->addChild(createMenuItem("Gates A -> B", CHECKMARK(module->_copyAction == Twinned2::GA2B), [module]() { module->_copyAction = Twinned2::GA2B; }));
+			CopyMenu->addChild(createMenuItem("Gates B -> A", CHECKMARK(module->_copyAction == Twinned2::GB2A), [module]() { module->_copyAction = Twinned2::GB2A; }));
+			menu->addChild(CopyMenu); }));
 	};
 };
 
