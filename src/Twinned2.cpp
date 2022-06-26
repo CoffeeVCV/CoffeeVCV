@@ -119,8 +119,8 @@ struct Twinned2 : Module
 		configParam(P_ABTHRESHOLD, 0.f, 10.f, 5.f, "AB Threshold");
 		for (int i = 0; i < NUM_STEPS; i++)
 		{
-			configParam(P_CV1 + i, 0.f, 10.f, 0.5f, string::f("Step A %d", i + 1));
-			configParam(P_CV1 + NUM_STEPS + i, 0.f, 10.f, 0.5f, string::f("Step B %d", i + 1));
+			configParam(P_CV1 + i, -5.f, 5.f, 0.0f, string::f("Step A %d", i + 1));
+			configParam(P_CV1 + NUM_STEPS + i, -5.f, 5.f, 0.f, string::f("Step B %d", i + 1));
 
 			configParam(P_PROB + i, -0.f, 1.f, 0.5f, string::f("Prob %d", i + 1));
 
@@ -289,6 +289,7 @@ struct Twinned2 : Module
 			}
 			_lastframe = args.frame;
 		}
+		_ready=!_clockTrigger.isHigh();
 
 		// check eoc
 		bool eoc = _eocPulse.process(args.sampleTime);
@@ -377,6 +378,8 @@ struct Twinned2 : Module
 			// next step
 			_lastStep = _step;
 			_lastAB = ab;
+			//_step++;
+			DEBUG("step %d", _step);
 		}
 	}
 };
@@ -394,10 +397,10 @@ struct Twinned2Widget : ModuleWidget
 		float yOffset = 15;
 		float xOffset = 10;
 		float mx = 70.96 / 2;
-		float x = xOffset;
-		float y = yOffset;
 
-		x = mx - (sx * 3);
+
+		float y = yOffset + sx*2;
+		float x = mx - (sx * 3);
 		// clock trig input and button
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y)), module, Twinned2::I_CLOCK));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5)), module, Twinned2::P_TRIGBUTTON));
@@ -415,6 +418,7 @@ struct Twinned2Widget : ModuleWidget
 		// randomize scale knob
 		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy * 3)), module, Twinned2::P_RANDOMIZESCALE));
 
+		y = yOffset;
 		// threshold input and knob
 		x = mx;
 		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Twinned2::I_ABSELECT));
@@ -472,7 +476,7 @@ struct Twinned2Widget : ModuleWidget
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x + sx, y)), module, Twinned2::O_CVB));
 
 		// gate outputs
-		y = yOffset + (sy * NUM_STEPS) - sy;
+		y = yOffset + (sy * 6);
 		x += sx * 3;
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Twinned2::O_AGATE));
 		y += sy;
