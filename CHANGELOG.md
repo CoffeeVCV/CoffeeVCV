@@ -30,3 +30,12 @@
     * Changed input calulation to source+offset*scale
   * Updated module HiLo
     * Cosmetic changes
+
+## v2.3.0 01 July 2022
+  * Added module Liken
+    * A comparator
+  * Added module Some3
+    * A polyphonic 
+  * Added Juice
+    * A thing
+  * 
