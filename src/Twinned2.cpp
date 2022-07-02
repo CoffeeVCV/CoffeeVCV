@@ -14,8 +14,9 @@
 // [x] TODO - add probability lights
 // [x] TODO - add gates knob, and make gates a poly output
 // [x] TODO - add polyphonic input for both sets
-// [ ] TODO - add menu to copy from A to B, or b to A
-// [ ] TODO - add button to randomise A or B
+// [x] TODO - add menu to copy from A to B, or b to A
+// [ ] TODO - update to/from json functions
+// [ ] TODO - add a 2nd cv param for both sets
 
 struct Twinned2 : Module
 {
@@ -25,7 +26,8 @@ struct Twinned2 : Module
 		P_RESETBUTTON,
 		P_STEPSELECT,
 		P_ABTHRESHOLD,
-		ENUMS(P_VOCT, NUM_STEPS *NUM_SEQS),
+		ENUMS(P_VOCT1, NUM_STEPS *NUM_SEQS),
+		ENUMS(P_VOCT2, NUM_STEPS *NUM_SEQS),
 		ENUMS(P_PROB, NUM_STEPS),
 		ENUMS(P_GATE, NUM_STEPS *NUM_SEQS),
 		P_RANDOMIZESCALE,
@@ -120,8 +122,13 @@ struct Twinned2 : Module
 		configParam(P_ABTHRESHOLD, 0.f, 10.f, 5.f, "AB Threshold");
 		for (int i = 0; i < NUM_STEPS; i++)
 		{
-			configParam(P_VOCT + i, -5.f, 5.f, 0.0f, string::f("Step A %d", i + 1));
-			configParam(P_VOCT + NUM_STEPS + i, -5.f, 5.f, 0.f, string::f("Step B %d", i + 1));
+			configParam(P_VOCT1 + i, -1.f, 1.f, 0.0f, string::f("Step A %d", i + 1));
+			configParam(P_VOCT1 + NUM_STEPS + i, -1.f, 1.f, 0.f, string::f("Step B %d", i + 1));
+
+			configParam(P_VOCT2 + i, -10.f, 10.f, 0.0f, string::f("Step A %d", i + 1));
+			paramQuantities[P_VOCT2 + i]->snapEnabled = true;
+			configParam(P_VOCT2 + NUM_STEPS + i, -10.f, 10.f, 0.f, string::f("Step B %d", i + 1));
+			paramQuantities[P_VOCT2 + NUM_STEPS + i]->snapEnabled = true;
 
 			configParam(P_PROB + i, -0.f, 1.f, 0.5f, string::f("Prob %d", i + 1));
 
@@ -183,7 +190,7 @@ struct Twinned2 : Module
 		}
 		else
 		{
-			cv = params[P_VOCT + step + ab].getValue();
+			cv = params[P_VOCT1 + step + ab].getValue();
 		}
 		return cv;
 	}
@@ -227,11 +234,11 @@ struct Twinned2 : Module
 				{
 					if (_copyAction == VOCTA2B)
 					{
-						params[P_VOCT + i + B].setValue(params[P_VOCT + i + A].getValue());
+						params[P_VOCT1 + i + B].setValue(params[P_VOCT1 + i + A].getValue());
 					}
 					else if (_copyAction == VOCTB2A)
 					{
-						params[P_VOCT + i + A].setValue(params[P_VOCT + i + B].getValue());
+						params[P_VOCT1 + i + A].setValue(params[P_VOCT1 + i + B].getValue());
 					}
 					else if (_copyAction == GA2B)
 					{
@@ -255,7 +262,7 @@ struct Twinned2 : Module
 					{
 						for (int i = 0; i < inputs[I_VOCT + seq].getChannels(); i++)
 						{
-							params[P_VOCT + i + (seq * NUM_STEPS)].setValue(inputs[I_VOCT + seq].getPolyVoltage(i));
+							params[P_VOCT1 + i + (seq * NUM_STEPS)].setValue(inputs[I_VOCT + seq].getPolyVoltage(i));
 						}
 					}
 					// update gate knobs
@@ -282,9 +289,9 @@ struct Twinned2 : Module
 				{
 					int pid;
 					if (i == VOCTA)
-						pid = P_VOCT + j;
+						pid = P_VOCT1 + j;
 					if (i == VOCTB)
-						pid = P_VOCT + j + NUM_STEPS;
+						pid = P_VOCT1 + j + NUM_STEPS;
 					if (i == GATEA)
 						pid = P_GATE + j;
 					if (i == GATEB)
@@ -420,11 +427,11 @@ struct Twinned2Widget : ModuleWidget
 		float sy = 10;
 		float sx = 10;
 		float yOffset = 15;
-		float xOffset = 10;
-		float mx = 70.96 / 2;
+		float xOffset = sx / 4;
+		float mx = 81.12 / 2;
 
-		float y = yOffset + sx * 2;
-		float x = mx - (sx * 3);
+		float y = yOffset + sy * 2;
+		float x = mx - (sx * 3) - 5;
 		// clock trig input and button
 		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y)), module, Twinned2::I_CLOCK));
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5)), module, Twinned2::P_TRIGBUTTON));
@@ -435,45 +442,40 @@ struct Twinned2Widget : ModuleWidget
 		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5 + sy)), module, Twinned2::P_RESETBUTTON));
 
 		// num steps stepped knob
-		// x += sx;
-		x = mx - (sx * 3);
 		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy + sy)), module, Twinned2::P_STEPSELECT));
 
 		// randomize scale knob
 		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy * 3)), module, Twinned2::P_RANDOMIZESCALE));
 
-		y = yOffset;
+		y = yOffset - (sy / 4);
 		// threshold input and knob
 		x = mx;
 		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Twinned2::I_ABSELECT));
 		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy)), module, Twinned2::P_ABTHRESHOLD));
 
-		// add cv inputs, cv1 and cv2 and prob knobs
-		x = mx;
-
 		// poly inputs CV
-		y = yOffset + sy;
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x - sx, y)), module, Twinned2::I_VOCT + 0));
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x + sx, y)), module, Twinned2::I_VOCT + 1));
+		y += sy;
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x - sx - xOffset, y)), module, Twinned2::I_VOCT + 0));
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x + sx + xOffset, y)), module, Twinned2::I_VOCT + 1));
 
 		// poly inputs GATES
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x - sx * 2, y)), module, Twinned2::I_GATE + 0));
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x + sx * 2, y)), module, Twinned2::I_GATE + 1));
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x - xOffset - sx * 2, y)), module, Twinned2::I_GATE + 0));
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x + xOffset + sx * 2, y)), module, Twinned2::I_GATE + 1));
 
 		// rand inputs and manula buttons
 		x = mx;
-		y = yOffset;
-		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x - sx, y)), module, Twinned2::I_RAND + Twinned2::VOCTA));
-		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x - sx + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::VOCTA));
+		y = yOffset - (sy / 4);
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x - sx - xOffset, y)), module, Twinned2::I_RAND + Twinned2::VOCTA));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x - sx - xOffset + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::VOCTA));
 
-		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x + sx, y)), module, Twinned2::I_RAND + Twinned2::VOCTB));
-		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + sx + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::VOCTB));
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x + sx + xOffset, y)), module, Twinned2::I_RAND + Twinned2::VOCTB));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + sx + xOffset + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::VOCTB));
 
-		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x - sx - sx, y)), module, Twinned2::I_RAND + Twinned2::GATEA));
-		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x - sx - sx + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::GATEA));
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x - sx - sx - xOffset, y)), module, Twinned2::I_RAND + Twinned2::GATEA));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x - sx - sx - xOffset + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::GATEA));
 
-		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x + sx + sx, y)), module, Twinned2::I_RAND + Twinned2::GATEB));
-		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + sx + sx + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::GATEB));
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x + sx + sx + xOffset, y)), module, Twinned2::I_RAND + Twinned2::GATEB));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + sx + sx + +xOffset + 3.5, y - 3.5)), module, Twinned2::P_RANDBUTTON + Twinned2::GATEB));
 
 		x = mx;
 		for (int i = 0; i < NUM_STEPS; i++)
@@ -484,24 +486,30 @@ struct Twinned2Widget : ModuleWidget
 			// lights
 			addChild(createLightCentered<SmallLight<OrangeLight> >(mm2px(Vec(x - 3.5, y + 3.5)), module, Twinned2::L_STEP + i));
 			addChild(createLightCentered<SmallLight<OrangeLight> >(mm2px(Vec(x + 3.5, y + 3.5)), module, Twinned2::L_STEP + NUM_STEPS + i));
-			// cv1
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x - sx, y)), module, Twinned2::P_VOCT + i));
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x + sx, y)), module, Twinned2::P_VOCT + i + NUM_STEPS));
+
+			// voct1
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x - sx - xOffset + 2, y)), module, Twinned2::P_VOCT1 + i));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x + sx + xOffset - 2, y)), module, Twinned2::P_VOCT1 + i + NUM_STEPS));
+			// voct2
+			addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x - sx - 3 - 2.5, y + 2.5)), module, Twinned2::P_VOCT2 + i));
+			addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x + sx + 3 + 2.5, y + 2.5)), module, Twinned2::P_VOCT2 + i + NUM_STEPS));
+
 			// gate knobs
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x - sx * 2, y)), module, Twinned2::P_GATE + i));
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x + sx * 2, y)), module, Twinned2::P_GATE + i + NUM_STEPS));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x - xOffset - sx * 2, y)), module, Twinned2::P_GATE + i));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x + xOffset + sx * 2, y)), module, Twinned2::P_GATE + i + NUM_STEPS));
 		}
 
 		y = yOffset + sy + sy + (sy * NUM_STEPS);
 		// cv winner output
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Twinned2::O_CVWINNER));
 		// cv outputs
-		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x - sx, y)), module, Twinned2::O_VOCTA));
-		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x + sx, y)), module, Twinned2::O_VOCTB));
+
+		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x - sx - xOffset, y)), module, Twinned2::O_VOCTA));
+		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x + sx + xOffset, y)), module, Twinned2::O_VOCTB));
 
 		// gate outputs
 		y = yOffset + (sy * 6);
-		x += sx * 3;
+		x += 5 + sx * 3;
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Twinned2::O_AGATE));
 		y += sy;
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Twinned2::O_BGATE));
@@ -524,8 +532,8 @@ struct Twinned2Widget : ModuleWidget
 			PolySelectMenu->addChild(createMenuItem("Update knobs from polyphony values", CHECKMARK(module->_updateControlsFromPoly == true), [module]() { module->_updateControlsFromPoly = true; }));
 			PolySelectMenu->addChild(createMenuItem("Polyphony values do not update knobs", CHECKMARK(module->_updateControlsFromPoly == false), [module]() { module->_updateControlsFromPoly = false; }));
 			menu->addChild(PolySelectMenu); }));
-		menu->addChild(new MenuSeparator());
-		menu->addChild(createSubmenuItem("Copy values", "", [=](Menu *menu)
+			menu->addChild(new MenuSeparator());
+			menu->addChild(createSubmenuItem("Copy values", "", [=](Menu *menu)
 										 {
 			Menu* CopyMenu = new Menu();
 			CopyMenu->addChild(createMenuItem("CV A -> B", CHECKMARK(module->_copyAction == Twinned2::VOCTA2B), [module]() { module->_copyAction = Twinned2::VOCTA2B; }));
