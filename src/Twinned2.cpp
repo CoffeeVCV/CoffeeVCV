@@ -15,12 +15,12 @@
 // [x] TODO - add gates knob, and make gates a poly output
 // [x] TODO - add polyphonic input for both sets
 // [x] TODO - add menu to copy from A to B, or b to A
-// [ ] TODO - update to/from json functions
+// [X] TODO - update to/from json functions
 // [x] TODO - add a 2nd cv param for both sets
-// [ ] TODo - fix menus
+// [X] TODo - fix menus
 // [ ] TODO - add other mode toggles : input * rand(v1) * v2
 // [ ] TODO - defend Steps from randomised values
-// [ ] TODO - add steps input and range selection
+// [X] TODO - add steps input and range selection
 
 struct Twinned2 : Module
 {
@@ -94,7 +94,16 @@ struct Twinned2 : Module
 		GATEB,
 		V1ONLY,
 		V2ONLY,
-		V1ANDV2,
+		V1ANDV2
+	};
+
+	enum RANDMASK
+	{
+		RANDNOTE = 1,
+		RANDOCT = 2,
+		RANDGATES = 4,
+		RANDPROB = 8,
+		RANDSTEP = 16
 	};
 
 	dsp::ClockDivider _lowPriority;
@@ -116,12 +125,13 @@ struct Twinned2 : Module
 	int _last_num_steps = -1;
 	bool _ready = true;
 	int _ab = A;
-	bool _polyGates = false;
-	int _copyAction = -1;
-	bool _updateControlsFromPoly = true;
-	int _randomizeMode = V1ONLY;
-	float _stepInputScales[3] = {1.f, 8.f, 10.f};
-	int _stepInputScale = 2;
+	bool _menu_polyGates = false;
+	int _menu_copyAction = -1;
+	bool _menu_updateControlsFromPoly = true;
+	int _menu_randomizeMode = V1ONLY;
+	float _menu_stepInputScales[3] = {1.f, 8.f, 10.f};
+	int _menu_stepInputScale = 2;
+	int _menu_randMask = 13;
 
 	Twinned2()
 	{
@@ -190,6 +200,30 @@ struct Twinned2 : Module
 		_num_steps = params[P_STEPSELECT].getValue();
 	}
 
+	void onRandomize() override {
+		DEBUG("onRandomize");
+		for(int i=0; i<NUM_STEPS; i++){
+			if(_menu_randMask & RANDNOTE) {
+				params[P_VOCT1 + i].setValue(random::uniform());
+				params[P_VOCT1 + NUM_STEPS + i].setValue(random::uniform());
+			}
+			if(_menu_randMask & RANDOCT) {
+				params[P_VOCT2 + i].setValue(random::uniform() * 20.f - 10.f);
+				params[P_VOCT2 + NUM_STEPS + i].setValue(random::uniform() * 20.f - 10.f);
+			}
+			if(_menu_randMask & RANDPROB) {
+				params[P_PROB + i].setValue(random::uniform());
+			}
+			if(_menu_randMask & RANDGATES) {
+				params[P_GATE + i].setValue(random::uniform());
+				params[P_GATE + i + NUM_STEPS].setValue(random::uniform());
+			}
+		}
+		if(_menu_randMask & RANDSTEP) {
+			params[P_STEPSELECT].setValue((random::uniform() * (NUM_STEPS-1))+1);
+		}	
+	}
+
 	float getCVOut(int step, int ab)
 	{
 		float cv;
@@ -221,15 +255,70 @@ struct Twinned2 : Module
 		return newValue;
 	}
 
+	json_t *dataToJson() override
+	{
+		//save menu items to jason
+		json_t *rootJ = json_object();
+
+		json_t *polyGates = json_boolean(_menu_polyGates);
+		json_object_set_new(rootJ, "polyGates", polyGates);
+
+		json_t *stepInputScale = json_real(_menu_stepInputScale);
+		json_object_set_new(rootJ, "stepInputScale", stepInputScale);
+
+		json_t *randomizeMode = json_integer(_menu_randomizeMode);
+		json_object_set_new(rootJ, "randomizeMode", randomizeMode);
+
+		json_t *updateControlsFromPoly = json_integer(_menu_updateControlsFromPoly);
+		json_object_set_new(rootJ, "updateControlsFromPoly", updateControlsFromPoly);
+
+		json_t *randMask = json_integer(_menu_randMask);
+		json_object_set_new(rootJ, "randMask", randMask);
+
+		return rootJ;
+	}
+
+	void dataFromJson(json_t *rootJ) override
+	{
+		json_t *polyGates = json_object_get(rootJ, "polyGates");
+		if (polyGates)
+		{
+			_menu_polyGates = json_boolean_value(polyGates);
+		}
+
+		json_t *stepInputScale = json_object_get(rootJ, "stepInputScale");
+		if (stepInputScale)
+		{
+			_menu_stepInputScale = json_real_value(stepInputScale);
+		}
+
+		json_t *randomizeMode = json_object_get(rootJ, "randomizeMode");
+		if (randomizeMode)
+		{
+			_menu_randomizeMode = json_integer_value(randomizeMode);
+		}
+
+		json_t *updateControlsFromPoly = json_object_get(rootJ, "updateControlsFromPoly");
+		if (updateControlsFromPoly)
+		{
+			_menu_updateControlsFromPoly = json_integer_value(updateControlsFromPoly);
+		}	
+		
+		json_t *randMask = json_object_get(rootJ, "randMask");
+		if (randMask)
+		{
+			_menu_randMask = json_integer_value(randMask);
+		}	
+	}
+
 	void process(const ProcessArgs &args) override
 	{
-
 		if (_lowPriority.process())
 		{
 			//check if input is being used for step num
 			if (inputs[I_STEPSELECT].isConnected())
 			{
-				_num_steps = rescale(inputs[I_STEPSELECT].getVoltage(),0.f,_stepInputScales[_stepInputScale],0,NUM_STEPS);
+				_num_steps = rescale(inputs[I_STEPSELECT].getVoltage(),0.f,_menu_stepInputScales[_menu_stepInputScale],0,NUM_STEPS);
 				if(_num_steps <1 || _num_steps > NUM_STEPS)
 				{
 					DEBUG("num step OOB %d", _num_steps);
@@ -255,45 +344,45 @@ struct Twinned2 : Module
 				}
 			}
 
-			int channels = (_polyGates) ? _num_steps : 1;
+			int channels = (_menu_polyGates) ? _num_steps : 1;
 			outputs[O_AGATE].setChannels(channels);
 			outputs[O_BGATE].setChannels(channels);
 			outputs[O_GATE].setChannels(channels);
 
-			if (_copyAction >= 0)
+			if (_menu_copyAction >= 0)
 			{
 				for (int i = 0; i < NUM_STEPS; i++)
 				{
-					if (_copyAction == VOCT1AtoB)
+					if (_menu_copyAction == VOCT1AtoB)
 					{
 						params[P_VOCT1 + i + B].setValue(params[P_VOCT1 + i + A].getValue());
 					}
-					else if (_copyAction == VOCT1BtoA)
+					else if (_menu_copyAction == VOCT1BtoA)
 					{
 						params[P_VOCT1 + i + A].setValue(params[P_VOCT1 + i + B].getValue());
 					}					
-					else if (_copyAction == VOCT2AtoB)
+					else if (_menu_copyAction == VOCT2AtoB)
 					{
 						params[P_VOCT2 + i + B].setValue(params[P_VOCT2 + i + A].getValue());
 					}
-					else if (_copyAction == VOCT2BtoA)
+					else if (_menu_copyAction == VOCT2BtoA)
 					{
 						params[P_VOCT2 + i + A].setValue(params[P_VOCT2 + i + B].getValue());
 					}
-					else if (_copyAction == GA2B)
+					else if (_menu_copyAction == GA2B)
 					{
 						params[P_GATE + i + B].setValue(params[P_GATE + i + A].getValue());
 					}
-					else if (_copyAction == GB2A)
+					else if (_menu_copyAction == GB2A)
 					{
 						params[P_GATE + i + A].setValue(params[P_GATE + i + B].getValue());
 					}
-					_copyAction = -1;
+					_menu_copyAction = -1;
 				}
 			}
 
 			// update gates if poly in is used
-			if (_updateControlsFromPoly)
+			if (_menu_updateControlsFromPoly)
 			{
 				for (int seq = 0; seq < NUM_SEQS; seq++)
 				{
@@ -347,11 +436,11 @@ struct Twinned2 : Module
 						float newValue = getScaledRandom(paramQuantities[pid1], scale, oldValue);
 						params[pid1].setValue(newValue);
 					} else {  // voct is done differently
-						if(_randomizeMode == V1ONLY ) {
+						if(_menu_randomizeMode == V1ONLY ) {
 							float oldValue = params[pid1].getValue();
 							float newValue = getScaledRandom(paramQuantities[pid1], scale, oldValue);
 							params[pid1].setValue(newValue);
-						} else if (_randomizeMode == V1ANDV2) {
+						} else if (_menu_randomizeMode == V1ANDV2) {
 							float oldValue1 = params[pid1].getValue();
 							float oldValue2 = params[pid2].getValue();
 							float newValue1 = getScaledRandom(paramQuantities[pid1], scale, oldValue1 + oldValue2);
@@ -405,10 +494,10 @@ struct Twinned2 : Module
 
 				if (timerExpired)
 				{
-					int channel = (_polyGates) ? i : 0;
+					int channel = (_menu_polyGates) ? i : 0;
 					int ABGate = (j == A) ? O_AGATE : O_BGATE;
 
-					if (_polyGates || i == _step)
+					if (_menu_polyGates || i == _step)
 					{
 						outputs[ABGate].setVoltage(0, channel);
 					}
@@ -447,7 +536,7 @@ struct Twinned2 : Module
 
 			// open gates
 
-			int channel = (_polyGates) ? _step : 0;
+			int channel = (_menu_polyGates) ? _step : 0;
 			// DEBUG("channel %d", channel);
 			outputs[O_GATE].setVoltage(10.f, channel);
 			outputs[O_AGATE].setVoltage(10.f, channel);
@@ -593,31 +682,40 @@ struct Twinned2Widget : ModuleWidget
 		menu->addChild(new MenuSeparator());
 		menu->addChild(createSubmenuItem("Polyphony", "", [=](Menu *menu) {
 			Menu* PolySelectMenu = new Menu();
-			PolySelectMenu->addChild(createMenuItem("Polyphonic Gate Out", CHECKMARK(module->_polyGates == true), [module]() { module->_polyGates = !module->_polyGates; }));
-			PolySelectMenu->addChild(createMenuItem("Update knobs from polyphony inputs", CHECKMARK(module->_updateControlsFromPoly == true), [module]() { module->_updateControlsFromPoly = !module->_updateControlsFromPoly; }));
+			PolySelectMenu->addChild(createMenuItem("Polyphonic Gate Out", CHECKMARK(module->_menu_polyGates == true), [module]() { module->_menu_polyGates = !module->_menu_polyGates; }));
+			PolySelectMenu->addChild(createMenuItem("Update knobs from polyphony inputs", CHECKMARK(module->_menu_updateControlsFromPoly == true), [module]() { module->_menu_updateControlsFromPoly = !module->_menu_updateControlsFromPoly; }));
 			menu->addChild(PolySelectMenu); }));
 		
 		menu->addChild(createSubmenuItem("Copy values", "", [=](Menu *menu) {
 			Menu* CopyMenu = new Menu();
-			CopyMenu->addChild(createMenuItem("Copy A V1 -> B", CHECKMARK(module->_copyAction == Twinned2::VOCT1AtoB), [module]() { module->_copyAction = Twinned2::VOCT1AtoB; }));
-			CopyMenu->addChild(createMenuItem("Copy A V2 -> B", CHECKMARK(module->_copyAction == Twinned2::VOCT2AtoB), [module]() { module->_copyAction = Twinned2::VOCT2AtoB; }));
-			CopyMenu->addChild(createMenuItem("Copy B V1 -> A", CHECKMARK(module->_copyAction == Twinned2::VOCT1BtoA), [module]() { module->_copyAction = Twinned2::VOCT1BtoA; }));
-			CopyMenu->addChild(createMenuItem("Copy B V2 -> A", CHECKMARK(module->_copyAction == Twinned2::VOCT2BtoA), [module]() { module->_copyAction = Twinned2::VOCT2BtoA; }));
-			CopyMenu->addChild(createMenuItem("Copy A Gates -> B", CHECKMARK(module->_copyAction == Twinned2::GA2B), [module]() { module->_copyAction = Twinned2::GA2B; }));
-			CopyMenu->addChild(createMenuItem("Copy B Gates -> A", CHECKMARK(module->_copyAction == Twinned2::GB2A), [module]() { module->_copyAction = Twinned2::GB2A; }));
+			CopyMenu->addChild(createMenuItem("Copy A V1 -> B", CHECKMARK(module->_menu_copyAction == Twinned2::VOCT1AtoB), [module]() { module->_menu_copyAction = Twinned2::VOCT1AtoB; }));
+			CopyMenu->addChild(createMenuItem("Copy A V2 -> B", CHECKMARK(module->_menu_copyAction == Twinned2::VOCT2AtoB), [module]() { module->_menu_copyAction = Twinned2::VOCT2AtoB; }));
+			CopyMenu->addChild(createMenuItem("Copy B V1 -> A", CHECKMARK(module->_menu_copyAction == Twinned2::VOCT1BtoA), [module]() { module->_menu_copyAction = Twinned2::VOCT1BtoA; }));
+			CopyMenu->addChild(createMenuItem("Copy B V2 -> A", CHECKMARK(module->_menu_copyAction == Twinned2::VOCT2BtoA), [module]() { module->_menu_copyAction = Twinned2::VOCT2BtoA; }));
+			CopyMenu->addChild(createMenuItem("Copy A Gates -> B", CHECKMARK(module->_menu_copyAction == Twinned2::GA2B), [module]() { module->_menu_copyAction = Twinned2::GA2B; }));
+			CopyMenu->addChild(createMenuItem("Copy B Gates -> A", CHECKMARK(module->_menu_copyAction == Twinned2::GB2A), [module]() { module->_menu_copyAction = Twinned2::GB2A; }));
 			menu->addChild(CopyMenu); }));
 		
-		menu->addChild(createSubmenuItem("Randomize", "", [=](Menu *menu) {
+		menu->addChild(createSubmenuItem("Randomize Input Trigger", "", [=](Menu *menu) {
 			Menu* RandomizeMenu = new Menu();
-			RandomizeMenu->addChild(createMenuItem("Randomize Notes only", CHECKMARK(module->_randomizeMode == Twinned2::V1ONLY), [module]() { module->_randomizeMode = Twinned2::V1ONLY; }));
-			RandomizeMenu->addChild(createMenuItem("Randomize Notes and Octave", CHECKMARK(module->_randomizeMode == Twinned2::V1ANDV2), [module]() { module->_randomizeMode = Twinned2::V1ANDV2; }));
+			RandomizeMenu->addChild(createMenuItem("Randomize Notes only", CHECKMARK(module->_menu_randomizeMode == Twinned2::V1ONLY), [module]() { module->_menu_randomizeMode = Twinned2::V1ONLY; }));
+			RandomizeMenu->addChild(createMenuItem("Randomize Notes and Octave", CHECKMARK(module->_menu_randomizeMode == Twinned2::V1ANDV2), [module]() { module->_menu_randomizeMode = Twinned2::V1ANDV2; }));
 			menu->addChild(RandomizeMenu); }));
+
+		menu->addChild(createSubmenuItem("Module Randomization", "", [=](Menu *menu) {
+			Menu* RandomizationMenu = new Menu();
+			RandomizationMenu->addChild(createMenuItem("Include V1 (Notes)", CHECKMARK(module->_menu_randMask & Twinned2::RANDNOTE), [module]() { module->_menu_randMask^=Twinned2::RANDNOTE; }));
+			RandomizationMenu->addChild(createMenuItem("Include V2 (Octavess)", CHECKMARK(module->_menu_randMask & Twinned2::RANDOCT), [module]() { module->_menu_randMask^=Twinned2::RANDOCT; }));
+			RandomizationMenu->addChild(createMenuItem("Include Gates", CHECKMARK(module->_menu_randMask & Twinned2::RANDGATES), [module]() { module->_menu_randMask^=Twinned2::RANDGATES; }));
+			RandomizationMenu->addChild(createMenuItem("Include Probability", CHECKMARK(module->_menu_randMask & Twinned2::RANDPROB), [module]() { module->_menu_randMask^=Twinned2::RANDPROB; }));
+			RandomizationMenu->addChild(createMenuItem("Include Steps", CHECKMARK(module->_menu_randMask & Twinned2::RANDSTEP), [module]() { module->_menu_randMask^=Twinned2::RANDSTEP; }));
+			menu->addChild(RandomizationMenu); }));
 
 		menu->addChild(createSubmenuItem("Step Input Scale", "", [=](Menu *menu) {
 			Menu* ScaleMenu = new Menu();
-			ScaleMenu->addChild(createMenuItem("0.0 to 1.0", CHECKMARK(module->_stepInputScale == 0), [module]() { module->_stepInputScale = 0; }));
-			ScaleMenu->addChild(createMenuItem("0.0 to 8.0", CHECKMARK(module->_stepInputScale == 1), [module]() { module->_stepInputScale = 1; }));
-			ScaleMenu->addChild(createMenuItem("0.0 to 10.0", CHECKMARK(module->_stepInputScale == 2), [module]() { module->_stepInputScale = 2; }));
+			ScaleMenu->addChild(createMenuItem("0.0 to 1.0", CHECKMARK(module->_menu_stepInputScale == 0), [module]() { module->_menu_stepInputScale = 0; }));
+			ScaleMenu->addChild(createMenuItem("0.0 to 8.0", CHECKMARK(module->_menu_stepInputScale == 1), [module]() { module->_menu_stepInputScale = 1; }));
+			ScaleMenu->addChild(createMenuItem("0.0 to 10.0", CHECKMARK(module->_menu_stepInputScale == 2), [module]() { module->_menu_stepInputScale = 2; }));
 			menu->addChild(ScaleMenu); }));	};
 };
 
