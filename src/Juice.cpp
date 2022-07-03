@@ -3,6 +3,9 @@
 #define NUM_ROWS 8
 #define NUM_SLOTS 16
 
+// [ ] Todo - fix 1st load, seem unintuiative
+// [ ] TODO - update to/from json functions
+
 struct Juice : Module
 {
 	enum ParamId
@@ -169,6 +172,10 @@ struct Juice : Module
 				json_object_set_new(rootJ, name.c_str(), json_preset);
 			}
 		}
+		json_t *polyphony = json_boolean(_polyphonic);
+		json_object_set_new(rootJ, "Polyphonic", polyphony);
+		json_t *currentSlot = json_integer(_presetControl.currentSlot);
+		json_object_set_new(rootJ, "CurrentSlot", currentSlot);
 		return rootJ;
 	}
 
@@ -193,6 +200,26 @@ struct Juice : Module
 			{
 				_presetControl.preset[n].active = false;
 			}
+		}
+		json_t *polyphony = json_object_get(rootJ, "Polyphonic");
+		if (polyphony)
+		{
+			_polyphonic = json_boolean_value(polyphony);
+		}
+
+		json_t *currentSlot = json_object_get(rootJ, "CurrentSlot");
+		if (currentSlot)
+		{
+			_presetControl.currentSlot = json_integer_value(currentSlot);
+			if(_presetControl.currentSlot < 0)
+			{
+				_presetControl.currentSlot = 0;
+			}
+			else if(_presetControl.currentSlot >= NUM_SLOTS)
+			{
+				_presetControl.currentSlot = NUM_SLOTS - 1;
+			}
+			_presetControl.loadSlot(params);
 		}
 	}
 

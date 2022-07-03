@@ -20,6 +20,7 @@
 // [ ] TODo - fix menus
 // [ ] TODO - add other mode toggles : input * rand(v1) * v2
 // [ ] TODO - defend Steps from randomised values
+// [ ] TODO - add steps input and range selection
 
 struct Twinned2 : Module
 {
@@ -43,6 +44,7 @@ struct Twinned2 : Module
 		I_CLOCK,
 		I_RESET,
 		I_ABSELECT,
+		I_STEPSELECT,
 		ENUMS(I_VOCT, NUM_SEQS),
 		ENUMS(I_GATE, NUM_SEQS),
 		ENUMS(I_RAND, NUM_SEQS * 2),
@@ -64,6 +66,7 @@ struct Twinned2 : Module
 	enum LightId
 	{
 		ENUMS(L_STEP, NUM_STEPS * 2),
+		L_ERRSTEPS,
 		LIGHTS_LEN
 	};
 
@@ -110,12 +113,15 @@ struct Twinned2 : Module
 	int _lastStep = -1;
 	int _lastAB = 0;
 	int _num_steps = -1;
+	int _last_num_steps = -1;
 	bool _ready = true;
 	int _ab = A;
 	bool _polyGates = false;
 	int _copyAction = -1;
 	bool _updateControlsFromPoly = true;
 	int _randomizeMode = V1ONLY;
+	float _stepInputScales[3] = {1.f, 8.f, 10.f};
+	int _stepInputScale = 2;
 
 	Twinned2()
 	{
@@ -155,6 +161,7 @@ struct Twinned2 : Module
 		configInput(I_RAND + GATEA, "Randomize A Gates");
 		configInput(I_RAND + GATEB, "Randomize B Gates");
 
+		configInput(I_STEPSELECT, "Steps");
 		configInput(I_ABSELECT, "AB Select");
 		configInput(I_VOCT + 0, "V/OCT A");
 		configInput(I_VOCT + 1, "V/OCT B");
@@ -219,12 +226,29 @@ struct Twinned2 : Module
 
 		if (_lowPriority.process())
 		{
-
-			if (_num_steps != params[P_STEPSELECT].getValue())
+			//check if input is being used for step num
+			if (inputs[I_STEPSELECT].isConnected())
+			{
+				_num_steps = rescale(inputs[I_STEPSELECT].getVoltage(),0.f,_stepInputScales[_stepInputScale],0,NUM_STEPS);
+				if(_num_steps <1 || _num_steps > NUM_STEPS)
+				{
+					DEBUG("num step OOB %d", _num_steps);
+					lights[L_ERRSTEPS].setBrightness(1.0f);
+					_num_steps=clamp(_num_steps,1,NUM_STEPS);
+				} else {
+					lights[L_ERRSTEPS].setBrightness(0.0f);
+				}
+			}
+			else
 			{
 				_num_steps = params[P_STEPSELECT].getValue();
+			}
+
+			if (_num_steps != _last_num_steps)
+			{
 				_step = 0;
 				_lastStep = 0;
+				_last_num_steps=_num_steps;
 				for (int i = 0; i < NUM_STEPS * 2; i++)
 				{
 					lights[L_STEP + i].setBrightness(0.f);
@@ -332,10 +356,9 @@ struct Twinned2 : Module
 							float oldValue2 = params[pid2].getValue();
 							float newValue1 = getScaledRandom(paramQuantities[pid1], scale, oldValue1 + oldValue2);
 							int v2 = (int)newValue1;
-							params[pid1].setValue(newValue1-v1);
+							params[pid1].setValue(newValue1-v2);
 							params[pid2].setValue(v2);
 						}
-
 					}
 				}
 			}
@@ -474,14 +497,22 @@ struct Twinned2Widget : ModuleWidget
 
 		// reset trig and button
 		// x += sx;
-		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y + sy)), module, Twinned2::I_RESET));
-		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5 + sy)), module, Twinned2::P_RESETBUTTON));
+		y+=sy;
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y)), module, Twinned2::I_RESET));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5)), module, Twinned2::P_RESETBUTTON));
 
+		//steps switch, input and indicator
+		y+=sy;
+		addInput(createInputCentered<CoffeeInputPortIndicator>(mm2px(Vec(x, y)), module, Twinned2::I_STEPSELECT));
+		addChild(createLightCentered<SmallLight<RedLight> >(mm2px(Vec(x + 3.5, y + 3.5)), module, Twinned2::L_ERRSTEPS));
+
+		y+=sy;
 		// num steps stepped knob
-		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy + sy)), module, Twinned2::P_STEPSELECT));
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y)), module, Twinned2::P_STEPSELECT));
 
+		y+=sy+sy;
 		// randomize scale knob
-		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy * 3)), module, Twinned2::P_RANDOMIZESCALE));
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y)), module, Twinned2::P_RANDOMIZESCALE));
 
 		y = yOffset - (sy / 4);
 		// threshold input and knob
@@ -577,11 +608,17 @@ struct Twinned2Widget : ModuleWidget
 			menu->addChild(CopyMenu); }));
 		
 		menu->addChild(createSubmenuItem("Randomize", "", [=](Menu *menu) {
-			Menu* CopyMenu = new Menu();
-			CopyMenu->addChild(createMenuItem("Randomize Notes only", CHECKMARK(module->_randomizeMode == Twinned2::V1ONLY), [module]() { module->_randomizeMode = Twinned2::V1ONLY; }));
-			CopyMenu->addChild(createMenuItem("Randomize Notes and Octave", CHECKMARK(module->_randomizeMode == Twinned2::V1ANDV2), [module]() { module->_randomizeMode = Twinned2::V1ANDV2; }));
-			menu->addChild(CopyMenu); }));
-	};
+			Menu* RandomizeMenu = new Menu();
+			RandomizeMenu->addChild(createMenuItem("Randomize Notes only", CHECKMARK(module->_randomizeMode == Twinned2::V1ONLY), [module]() { module->_randomizeMode = Twinned2::V1ONLY; }));
+			RandomizeMenu->addChild(createMenuItem("Randomize Notes and Octave", CHECKMARK(module->_randomizeMode == Twinned2::V1ANDV2), [module]() { module->_randomizeMode = Twinned2::V1ANDV2; }));
+			menu->addChild(RandomizeMenu); }));
+
+		menu->addChild(createSubmenuItem("Step Input Scale", "", [=](Menu *menu) {
+			Menu* ScaleMenu = new Menu();
+			ScaleMenu->addChild(createMenuItem("0.0 to 1.0", CHECKMARK(module->_stepInputScale == 0), [module]() { module->_stepInputScale = 0; }));
+			ScaleMenu->addChild(createMenuItem("0.0 to 8.0", CHECKMARK(module->_stepInputScale == 1), [module]() { module->_stepInputScale = 1; }));
+			ScaleMenu->addChild(createMenuItem("0.0 to 10.0", CHECKMARK(module->_stepInputScale == 2), [module]() { module->_stepInputScale = 2; }));
+			menu->addChild(ScaleMenu); }));	};
 };
 
 Model *modelTwinned2 = createModel<Twinned2, Twinned2Widget>("Twinned2");
