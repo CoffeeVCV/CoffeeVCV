@@ -196,9 +196,14 @@ struct Twinned2 : Module
 	{
 		DEBUG("Reset");
 		_ready = true;
-		_step = 0;
-		_lastStep = 0;
+		_step = -1;
+		_lastStep = -1;
 		_num_steps = params[P_STEPSELECT].getValue();
+		//set all step lighta to off
+		for (int i = 0; i < NUM_STEPS; i++)
+		{
+			lights[L_STEP + i].setBrightness(0.f);
+		}
 	}
 
 	void onRandomize() override
