@@ -36,6 +36,7 @@ struct Twinned2 : Module
 		ENUMS(P_GATE, NUM_STEPS *NUM_SEQS),
 		P_RANDOMIZESCALE,
 		ENUMS(P_RANDBUTTON, NUM_SEQS * 2),
+		P_RANDOMIZEBUTTON,
 		PARAMS_LEN
 	};
 
@@ -111,6 +112,7 @@ struct Twinned2 : Module
 	dsp::SchmittTrigger _randTrigger[NUM_SEQS * 2];
 	dsp::BooleanTrigger _resetButton;
 	dsp::BooleanTrigger _clockButton;
+	dsp::SchmittTrigger _randomizeButton;
 	dsp::SchmittTrigger _resetTrigger;
 	dsp::SchmittTrigger _clockTrigger;
 	dsp::PulseGenerator _eocPulse;
@@ -136,6 +138,7 @@ struct Twinned2 : Module
 	Twinned2()
 	{
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+		configButton(P_RANDOMIZEBUTTON, "Randomize");
 		configButton(P_TRIGBUTTON, "Manual trigger");
 		configButton(P_RESETBUTTON, "Reset");
 		configInput(I_CLOCK, "Clock");
@@ -206,33 +209,39 @@ struct Twinned2 : Module
 		}
 	}
 
-	void onRandomize() override
+	void Randomize() 
 	{
 		DEBUG("onRandomize");
+		DEBUG("Menu mask: %d", _menu_randMask);
 		for (int i = 0; i < NUM_STEPS; i++)
 		{
 			if (_menu_randMask & RANDNOTE)
 			{
+				DEBUG("%d Randomizing note %d", RANDNOTE, i);
 				params[P_VOCT1 + i].setValue(random::uniform());
 				params[P_VOCT1 + NUM_STEPS + i].setValue(random::uniform());
 			}
 			if (_menu_randMask & RANDOCT)
 			{
+				DEBUG("%d Randomizing oct %d", RANDOCT, i);
 				params[P_VOCT2 + i].setValue(random::uniform() * 20.f - 10.f);
 				params[P_VOCT2 + NUM_STEPS + i].setValue(random::uniform() * 20.f - 10.f);
 			}
 			if (_menu_randMask & RANDPROB)
 			{
+				DEBUG("%d Randomizing prob %d", RANDPROB, i);
 				params[P_PROB + i].setValue(random::uniform());
 			}
 			if (_menu_randMask & RANDGATES)
 			{
+				DEBUG("%d Randomizing gates %d", RANDGATES, i);
 				params[P_GATE + i].setValue(random::uniform());
 				params[P_GATE + i + NUM_STEPS].setValue(random::uniform());
 			}
 		}
 		if (_menu_randMask & RANDSTEP)
 		{
+			DEBUG("%d Randomizing step", RANDSTEP);
 			params[P_STEPSELECT].setValue((random::uniform() * (NUM_STEPS - 1)) + 1);
 		}
 	}
@@ -328,6 +337,12 @@ struct Twinned2 : Module
 	{
 		if (_lowPriority.process())
 		{
+			bool randomizeButtonPressed = _randomizeButton.process(params[P_RANDOMIZEBUTTON].getValue());
+			if(randomizeButtonPressed)
+			{
+				Randomize();
+			}
+
 			// check if input is being used for step num
 			if (inputs[I_STEPSELECT].isConnected())
 			{
@@ -625,7 +640,11 @@ struct Twinned2Widget : ModuleWidget
 		// num steps stepped knob
 		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y)), module, Twinned2::P_STEPSELECT));
 
-		y += sy + sy;
+		//add randomize button
+		y +=sy;
+		addParam(createParamCentered<CoffeeInputButton5mm>(mm2px(Vec(x, y)), module, Twinned2::P_RANDOMIZEBUTTON));
+		
+		y +=sy;
 		// randomize scale knob
 		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y)), module, Twinned2::P_RANDOMIZESCALE));
 
