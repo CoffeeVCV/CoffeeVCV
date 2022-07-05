@@ -17,7 +17,7 @@ void init(Plugin* p) {
 	p->addModel(modelFork);
 	p->addModel(modelSome2);
 	p->addModel(modelTap);
-	p->addModel(modelLiken);
+	p->addModel(modelFork2);
 	p->addModel(modelSome3);
 	p->addModel(modelJuice);
 	p->addModel(modelTwinned2);

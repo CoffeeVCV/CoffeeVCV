@@ -195,21 +195,21 @@ struct Twinned2 : Module
 		_lastStep = 0;
 	}
 
-	void Reset() 
+	void Reset()
 	{
 		DEBUG("Reset");
 		_ready = true;
 		_step = -1;
 		_lastStep = -1;
 		_num_steps = params[P_STEPSELECT].getValue();
-		//set all step lighta to off
+		// set all step lighta to off
 		for (int i = 0; i < NUM_STEPS; i++)
 		{
 			lights[L_STEP + i].setBrightness(0.f);
 		}
 	}
 
-	void Randomize() 
+	void Randomize()
 	{
 		DEBUG("onRandomize");
 		DEBUG("Menu mask: %d", _menu_randMask);
@@ -338,7 +338,7 @@ struct Twinned2 : Module
 		if (_lowPriority.process())
 		{
 			bool randomizeButtonPressed = _randomizeButton.process(params[P_RANDOMIZEBUTTON].getValue());
-			if(randomizeButtonPressed)
+			if (randomizeButtonPressed)
 			{
 				Randomize();
 			}
@@ -435,7 +435,7 @@ struct Twinned2 : Module
 					}
 				}
 			} // end update controls from poly
-		} // end low priority
+		}	  // end low priority
 
 		// check if any of the randomisation is needed.
 		float scale = params[P_RANDOMIZESCALE].getValue();
@@ -491,7 +491,8 @@ struct Twinned2 : Module
 		// reset trigger and button
 		bool reset = _resetTrigger.process(inputs[I_RESET].getVoltage());
 		bool resetbutton = _resetButton.process(params[P_RESETBUTTON].getValue());
-		if (_ready && (reset || resetbutton)){
+		if (_ready && (reset || resetbutton))
+		{
 			Reset();
 		} // end reset
 
@@ -603,7 +604,7 @@ struct Twinned2 : Module
 			_lastAB = ab;
 		}
 	}
-}; 
+};
 
 struct Twinned2Widget : ModuleWidget
 {
@@ -640,11 +641,11 @@ struct Twinned2Widget : ModuleWidget
 		// num steps stepped knob
 		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y)), module, Twinned2::P_STEPSELECT));
 
-		//add randomize button
-		y +=sy;
+		// add randomize button
+		y += sy;
 		addParam(createParamCentered<CoffeeInputButton5mm>(mm2px(Vec(x, y)), module, Twinned2::P_RANDOMIZEBUTTON));
-		
-		y +=sy;
+
+		y += sy;
 		// randomize scale knob
 		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y)), module, Twinned2::P_RANDOMIZESCALE));
 

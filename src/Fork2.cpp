@@ -1,35 +1,35 @@
 #include "plugin.hpp"
 #include "components.hpp"
-#define NUMsetS 2
+#define NUM_SETS 2
 
-struct Liken : Module
+struct Fork2 : Module
 {
 	enum ParamId
 	{
 		P_TRIGBUTTON,
 		P_THRESHOLD,
-		ENUMS(P_SCALE, NUMsetS),
-		ENUMS(P_OFFSET, NUMsetS),
-		ENUMS(P_MODSWITCH, NUMsetS),
+		ENUMS(P_SCALE, NUM_SETS),
+		ENUMS(P_OFFSET, NUM_SETS),
+		ENUMS(P_MODSWITCH, NUM_SETS),
 		PARAMS_LEN
 	};
 	enum InputId
 	{
 		I_TRIG,
 		I_THRESHOLD,
-		ENUMS(I_CV, NUMsetS),
+		ENUMS(I_CV, NUM_SETS),
 		I_SOURCECV,
 		INPUTS_LEN
 	};
 	enum OutputId
 	{
 		O_CV,
-		ENUMS(O_TRIG, NUMsetS),
+		ENUMS(O_TRIG, NUM_SETS),
 		OUTPUTS_LEN
 	};
 	enum LightId
 	{
-		ENUMS(L_Active, NUMsetS),
+		ENUMS(L_Active, NUM_SETS),
 		LIGHTS_LEN
 	};
 
@@ -50,18 +50,18 @@ struct Liken : Module
 	};
 	dsp::SchmittTrigger _sampleTrigger;
 	dsp::BooleanTrigger _buttonTrigger;
-	dsp::PulseGenerator _trigPulse[NUMsetS];
+	dsp::PulseGenerator _trigPulse[NUM_SETS];
 	bool _ready = true;
 	float _sample = 0.f;
 	float _lastsample = 0.f;
 	float _lastset = -1;
 
-	Liken()
+	Fork2()
 	{
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configButton(P_TRIGBUTTON, "Manual trigger");
 		configParam(P_THRESHOLD, -10.f, 10.f, 0.f, "Threshold");
-		for (int i = 0; i < NUMsetS; i++)
+		for (int i = 0; i < NUM_SETS; i++)
 		{
 			configParam(P_SCALE + i, -10.f, 10.f, 1.f, string::f("Scale %d", i + 1));
 			configParam(P_OFFSET + i, -10.f, 10.f, 0.f, string::f("Offset %d", i + 1));
@@ -96,8 +96,8 @@ struct Liken : Module
 		bool triggered = _sampleTrigger.process(inputs[I_TRIG].getVoltage());
 		bool trigButtonPressed = _buttonTrigger.process(params[P_TRIGBUTTON].getValue());
 
-		float modInV[NUMsetS];
-		for (int i = 0; i < NUMsetS; i++)
+		float modInV[NUM_SETS];
+		for (int i = 0; i < NUM_SETS; i++)
 		{
 			bool pulse = _trigPulse[i].process(args.sampleTime);
 			outputs[O_TRIG + i].setVoltage(pulse ? 10.f : 0.f);
@@ -121,7 +121,7 @@ struct Liken : Module
 
 		if (_sample != _lastsample)
 		{
-			_lastsample=_sample;
+			_lastsample = _sample;
 			// if threshold input is connect use it otherwise use the param
 			float threshold = inputs[I_THRESHOLD].isConnected() ? inputs[I_THRESHOLD].getVoltage() : params[P_THRESHOLD].getValue();
 			// check if _sample is higher or lower then threshold
@@ -145,12 +145,12 @@ struct Liken : Module
 	}
 };
 
-struct LikenWidget : ModuleWidget
+struct Fork2Widget : ModuleWidget
 {
-	LikenWidget(Liken *module)
+	Fork2Widget(Fork2 *module)
 	{
 		setModule(module);
-		setPanel(createPanel(asset::plugin(pluginInstance, "res/Liken.svg")));
+		setPanel(createPanel(asset::plugin(pluginInstance, "res/Fork2.svg")));
 
 		float yOffset = 12.f;
 		float sy = 10;
@@ -161,43 +161,43 @@ struct LikenWidget : ModuleWidget
 		float x = mx;
 		float y = yOffset;
 		// input trigger
-		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y)), module, Liken::I_TRIG));
-		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5)), module, Liken::P_TRIGBUTTON));
+		addInput(createInputCentered<CoffeeInputPortButton>(mm2px(Vec(x, y)), module, Fork2::I_TRIG));
+		addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5)), module, Fork2::P_TRIGBUTTON));
 
 		// input source
 		y += sy + 5;
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Liken::I_SOURCECV));
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Fork2::I_SOURCECV));
 
 		// threshold input and param
 		y += sy;
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Liken::I_THRESHOLD));
-		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy)), module, Liken::P_THRESHOLD));
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Fork2::I_THRESHOLD));
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(x, y + sy)), module, Fork2::P_THRESHOLD));
 
 		y += (sy * 3) - 5;
-		for (int i = 0; i < NUMsetS; i++)
+		for (int i = 0; i < NUM_SETS; i++)
 		{
 			// Raplacement A input, offset, scale and switch
 			y = (sy * 6) - 0;
 			x = (i == 0) ? rx : lx;
-			addChild(createLightCentered<MediumLight<OrangeLight> >(mm2px(Vec(x, y)), module, Liken::L_Active + i));
+			addChild(createLightCentered<MediumLight<OrangeLight> >(mm2px(Vec(x, y)), module, Fork2::L_Active + i));
 			y += sy - 2.5;
-			addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Liken::I_CV + i));
+			addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Fork2::I_CV + i));
 			y += 7.5;
-			addParam(createParamCentered<CoffeeSwitch2PosHori>(mm2px(Vec(x, y)), module, Liken::P_MODSWITCH + i));
+			addParam(createParamCentered<CoffeeSwitch2PosHori>(mm2px(Vec(x, y)), module, Fork2::P_MODSWITCH + i));
 			y += sy - 2.5;
 			;
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Liken::P_OFFSET + i));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Fork2::P_OFFSET + i));
 			y += sy - 2.5;
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Liken::P_SCALE + i));
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Fork2::P_SCALE + i));
 			y += sy;
-			addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Liken::O_TRIG + i));
+			addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Fork2::O_TRIG + i));
 		}
 
 		// output
 		x = mx;
 		y = yOffset + (sy * 10) + 2.5;
-		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Liken::O_CV));
+		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Fork2::O_CV));
 	}
 };
 
-Model *modelLiken = createModel<Liken, LikenWidget>("Liken");
+Model *modelFork2 = createModel<Fork2, Fork2Widget>("Fork2");

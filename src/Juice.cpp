@@ -147,7 +147,6 @@ struct Juice : Module
 		configInput(I_PREVACTIVE, "Prev Active");
 		configInput(I_NEXTACTIVE, "Next Active");
 		_lowPriorityDivider.setDivision(16);
-
 	}
 
 	void onRandomize() override
@@ -211,11 +210,11 @@ struct Juice : Module
 		if (currentSlot)
 		{
 			_presetControl.currentSlot = json_integer_value(currentSlot);
-			if(_presetControl.currentSlot < 0)
+			if (_presetControl.currentSlot < 0)
 			{
 				_presetControl.currentSlot = 0;
 			}
-			else if(_presetControl.currentSlot >= NUM_SLOTS)
+			else if (_presetControl.currentSlot >= NUM_SLOTS)
 			{
 				_presetControl.currentSlot = NUM_SLOTS - 1;
 			}
@@ -223,15 +222,20 @@ struct Juice : Module
 		}
 	}
 
-	void output(){
-		if(_polyphonic) {
-			outputs[O_CV1+0].setChannels(NUM_ROWS);
+	void output()
+	{
+		if (_polyphonic)
+		{
+			outputs[O_CV1 + 0].setChannels(NUM_ROWS);
 		}
 		for (int i = 0; i < NUM_ROWS; i++)
 		{
-			if(_polyphonic) {
-				outputs[O_CV1 + 0].setVoltage(params[P_V + i].getValue(),i);
-			} else {
+			if (_polyphonic)
+			{
+				outputs[O_CV1 + 0].setVoltage(params[P_V + i].getValue(), i);
+			}
+			else
+			{
 				outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue());
 			}
 		}
@@ -239,7 +243,7 @@ struct Juice : Module
 
 	void process(const ProcessArgs &args) override
 	{
-		//check if input select is being used
+		// check if input select is being used
 		if (inputs[I_SELECT].isConnected())
 		{
 			float selectVoltage = inputs[I_SELECT].getVoltage();
@@ -252,14 +256,14 @@ struct Juice : Module
 			}
 		}
 
-		//check if input random active is being triggers
+		// check if input random active is being triggers
 		bool doRandom = true;
 		doRandom &= randomTriggerReady;
 		doRandom &= _randomActiveTrigger.process(inputs[I_RANDOMACTIVE].getVoltage());
 		doRandom |= _randomActiveButtonTrigger.process(params[P_RANDOMACTIVEBUTTON].getValue());
 		if (doRandom)
 		{
-			//just cointoss up or down
+			// just cointoss up or down
 			if (random::uniform() > 0.5)
 			{
 				_presetControl.nextActiveSlot();
@@ -272,7 +276,7 @@ struct Juice : Module
 		}
 		randomTriggerReady = !_randomActiveTrigger.isHigh();
 
-		//select next active slot
+		// select next active slot
 		if (nextTriggerReady & _nextActiveTrigger.process(inputs[I_NEXTACTIVE].getVoltage()))
 		{
 			_presetControl.nextActiveSlot();
@@ -280,7 +284,7 @@ struct Juice : Module
 		}
 		nextTriggerReady = (!_nextActiveTrigger.isHigh());
 
-		//select prev active slot
+		// select prev active slot
 		if (prevTriggerReady & _prevActiveTrigger.process(inputs[I_PREVACTIVE].getVoltage()))
 		{
 			_presetControl.prevActiveSlot();
@@ -459,22 +463,18 @@ struct JuiceWidget : ModuleWidget
 		addChild(display);
 	}
 
-	void appendContextMenu(Menu* menu) override {
-		Juice* module = dynamic_cast<Juice*>(this->module);
+	void appendContextMenu(Menu *menu) override
+	{
+		Juice *module = dynamic_cast<Juice *>(this->module);
 		assert(module);
 		menu->addChild(new MenuSeparator());
-		menu->addChild(createSubmenuItem("Polyphonic", "", [=](Menu* menu) {
+		menu->addChild(createSubmenuItem("Polyphonic", "", [=](Menu *menu)
+										 {
 			Menu* polyphonicMenu = new Menu();
 			polyphonicMenu->addChild(createMenuItem("Polyphonic", CHECKMARK(module->_polyphonic == true), [module]() { module->_polyphonic = true; }));
 			polyphonicMenu->addChild(createMenuItem("Monophonic", CHECKMARK(module->_polyphonic == false), [module]() { module->_polyphonic = false; }));
-			menu->addChild(polyphonicMenu);
-		}));
+			menu->addChild(polyphonicMenu); }));
 	};
-
-
-
-
-
 };
 
 Model *modelJuice = createModel<Juice, JuiceWidget>("Juice");

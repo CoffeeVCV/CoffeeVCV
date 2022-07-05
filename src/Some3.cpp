@@ -230,7 +230,7 @@ struct Some3 : Module
 			{
 				float v = (i >= _selectionStart && i < _selectionEnd) ? 1 : 0;
 				lights[L_SELECTED + i].setBrightness(v);
-				lights[L_ACTIVE + i].setBrightness((_outputs[i] > -1)?1:0);
+				lights[L_ACTIVE + i].setBrightness((_outputs[i] > -1) ? 1 : 0);
 			}
 
 			// update  error lights
