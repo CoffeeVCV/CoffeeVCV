@@ -123,9 +123,9 @@ struct Juice : Module
 	dsp::SchmittTrigger _prevActiveTrigger;
 	dsp::SchmittTrigger _randomActiveTrigger;
 	presetControl _presetControl;
-	bool prevTriggerReady = true;
-	bool nextTriggerReady = true;
-	bool randomTriggerReady = true;
+	bool _prevTriggerReady = true;
+	bool _nextTriggerReady = true;
+	bool _randomTriggerReady = true;
 	bool _polyphonic = false;
 
 	Juice()
@@ -227,9 +227,12 @@ struct Juice : Module
 		if (_polyphonic)
 		{
 			outputs[O_CV1 + 0].setChannels(NUM_ROWS);
+		} else {
+			outputs[O_CV1 + 0].setChannels(1);
 		}
 		for (int i = 0; i < NUM_ROWS; i++)
 		{
+			
 			if (_polyphonic)
 			{
 				outputs[O_CV1 + 0].setVoltage(params[P_V + i].getValue(), i);
@@ -258,7 +261,7 @@ struct Juice : Module
 
 		// check if input random active is being triggers
 		bool doRandom = true;
-		doRandom &= randomTriggerReady;
+		doRandom &= _randomTriggerReady;
 		doRandom &= _randomActiveTrigger.process(inputs[I_RANDOMACTIVE].getVoltage());
 		doRandom |= _randomActiveButtonTrigger.process(params[P_RANDOMACTIVEBUTTON].getValue());
 		if (doRandom)
@@ -274,23 +277,23 @@ struct Juice : Module
 			}
 			_presetControl.loadSlot(params);
 		}
-		randomTriggerReady = !_randomActiveTrigger.isHigh();
+		_randomTriggerReady = !_randomActiveTrigger.isHigh();
 
 		// select next active slot
-		if (nextTriggerReady & _nextActiveTrigger.process(inputs[I_NEXTACTIVE].getVoltage()))
+		if (_nextTriggerReady & _nextActiveTrigger.process(inputs[I_NEXTACTIVE].getVoltage()))
 		{
 			_presetControl.nextActiveSlot();
 			_presetControl.loadSlot(params);
 		}
-		nextTriggerReady = (!_nextActiveTrigger.isHigh());
+		_nextTriggerReady = (!_nextActiveTrigger.isHigh());
 
 		// select prev active slot
-		if (prevTriggerReady & _prevActiveTrigger.process(inputs[I_PREVACTIVE].getVoltage()))
+		if (_prevTriggerReady & _prevActiveTrigger.process(inputs[I_PREVACTIVE].getVoltage()))
 		{
 			_presetControl.prevActiveSlot();
 			_presetControl.loadSlot(params);
 		}
-		prevTriggerReady = (!_prevActiveTrigger.isHigh());
+		_prevTriggerReady = (!_prevActiveTrigger.isHigh());
 
 		if (_lowPriorityDivider.process())
 		{
@@ -326,13 +329,34 @@ struct Juice : Module
 			}
 
 			lights[L_SLOTINUSE].value = _presetControl.preset[_presetControl.currentSlot].active;
+		}// end low priority divider
+
+		// if (_polyphonic)
+		// {
+		// 	outputs[O_CV1 + 0].setChannels(NUM_ROWS);
+		// } else {
+		// 	outputs[O_CV1 + 0].setChannels(1);
+		// }
+
+		outputs[O_CV1 + 0].setChannels(_polyphonic ? NUM_ROWS : 1);
+
+
+		for (int i = 0; i < NUM_ROWS; i++)
+		{
+			outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue(), _polyphonic ? i : 0);
+
+
+
+			// if (_polyphonic)
+			// {
+			// 	outputs[O_CV1 + 0].setVoltage(params[P_V + i].getValue(), i);
+			// }
+			// else
+			// {
+			// 	outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue(), 0);
+			// }
 		}
 
-		if (_presetControl.changed)
-		{
-			output();
-			_presetControl.changed = false;
-		}
 	}
 };
 
