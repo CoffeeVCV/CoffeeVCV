@@ -112,8 +112,8 @@
       ]
     },
     {
-      "slug": "Liken",
-      "name": "Liken",
+      "slug": "Fork2",
+      "name": "Fork2",
       "description": "Compare an input with a threshold and output one of two other inputs.",
       "tags": ["Logic","Utility"]
     },
@@ -126,13 +126,13 @@
     {
       "slug": "Juice",
       "name": "Juice",
-      "description": "Selet one of 16 sets of 8 fixed voltages, based on a CV input.",
+      "description": "Select one of 16 sets of 8 fixed voltages, based on a CV input.",
       "tags": ["Polyphonic","Utility"]
     },
     {
       "slug": "Twinned2",
       "name": "Twinned2",
-      "description": "A pair of 8 step polyphonic sequencers with randomization",
+      "description": "A sequencer with pair of 8 step notes, gates, randomisation and polyphonic input.",
       "tags": ["Sequencer","Polyphonic","Random"]
     }
   ]
