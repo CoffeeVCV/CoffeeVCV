@@ -129,6 +129,58 @@ struct CoffeeKnob10mm : app::SvgKnob
 	}
 };
 
+struct CoffeeKnob16mm : app::SvgKnob
+{
+	widget::SvgWidget *bg;
+
+	CoffeeKnob16mm()
+	{
+		minAngle = -0.75 * M_PI;
+		maxAngle = 0.75 * M_PI;
+		shadow->opacity = 0;
+		bg = new widget::SvgWidget;
+		fb->addChildBelow(bg, tw);
+
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob16mm.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob16mm_bg.svg")));
+	}
+};
+
+
+struct CoffeeKnob20mm : app::SvgKnob
+{
+	widget::SvgWidget *bg;
+
+	CoffeeKnob20mm()
+	{
+		minAngle = -0.75 * M_PI;
+		maxAngle = 0.75 * M_PI;
+		shadow->opacity = 0;
+		bg = new widget::SvgWidget;
+		fb->addChildBelow(bg, tw);
+
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob20mm.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob20mm_bg.svg")));
+	}
+};
+
+struct CoffeeKnob30mm : app::SvgKnob
+{
+	widget::SvgWidget *bg;
+
+	CoffeeKnob30mm()
+	{
+		minAngle = -0.75 * M_PI;
+		maxAngle = 0.75 * M_PI;
+		shadow->opacity = 0;
+		bg = new widget::SvgWidget;
+		fb->addChildBelow(bg, tw);
+
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob30mm.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob30mm_bg.svg")));
+	}
+};
+
 template <typename TBase = GrayModuleLightWidget>
 struct TOrangeLight : TBase
 {

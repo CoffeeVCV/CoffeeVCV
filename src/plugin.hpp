@@ -22,3 +22,4 @@ extern Model *modelFork2;
 extern Model *modelSome3;
 extern Model *modelJuice;
 extern Model *modelTwinned2;
+extern Model *modelSet2;

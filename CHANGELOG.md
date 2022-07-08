@@ -32,10 +32,13 @@
     * Cosmetic changes
 
 ## v2.3.0 01 July 2022
-  * Added module Liken
-    * A comparator
+  * Added module Fork2
+    * Compare an input with a threshold and output one of two other inputs.
   * Added module Some3
-    * A polyphonic 
-  * Added Juice
-    * A thing
-  * 
+    * From a polyphonic input, when triggered, mute a number of the inputs, based on a probability.
+  * Added module Juice
+    * A polyphonic utility - select one of 16 sets of 8 fixed voltages, based on a CV input.
+  * Added module Twinned2
+    * A sequencer with pair of 8 step notes, gates, randomisation and polyphonic input.
+  * Updated Module Tumble
+    * Fixed issues with gates

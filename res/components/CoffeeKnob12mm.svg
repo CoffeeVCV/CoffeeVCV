@@ -2,13 +2,13 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="9.9999609mm"
-   height="10.000019mm"
-   viewBox="0 0 9.9999609 10.000019"
+   width="12mm"
+   height="12.00007mm"
+   viewBox="0 0 12 12.00007"
    version="1.1"
    id="svg30576"
-   inkscape:version="1.1.2 (b8e25be8, 2022-02-05)"
-   sodipodi:docname="CoffeeKnob10mm.svg"
+   inkscape:version="1.2 (dc2aeda, 2022-05-15)"
+   sodipodi:docname="CoffeeKnob12mm.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -27,26 +27,27 @@
      fit-margin-left="0"
      fit-margin-right="0"
      fit-margin-bottom="0"
-     inkscape:zoom="6.0220562"
-     inkscape:cx="8.6349244"
-     inkscape:cy="30.305264"
+     inkscape:zoom="11.145287"
+     inkscape:cx="21.8478"
+     inkscape:cy="21.8478"
      inkscape:window-width="1280"
      inkscape:window-height="674"
      inkscape:window-x="0"
      inkscape:window-y="25"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="layer1"
+     inkscape:showpageshadow="0"
+     inkscape:deskcolor="#d1d1d1" />
   <defs
      id="defs30573" />
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-1.8607363,0.83909031)"
-     style="display:inline">
+     transform="translate(-1.8607364,0.8390903)">
     <g
        id="g31009"
-       transform="matrix(1.249996,0,0,1.25,2.0056822,-0.69819057)"
+       transform="matrix(1.5,0,0,1.5000087,2.0316257,-0.66820003)"
        style="display:inline">
       <circle
          style="fill:#fdf2dd;stroke:#603601;stroke-width:0.382566;stroke-miterlimit:4;stroke-dasharray:none;stop-color:#000000"
