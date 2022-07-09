@@ -69,8 +69,6 @@ struct Set2 : Module
 				lights[L_POINT + j].setBrightness(j < v ? 1.f : 0.f);
 			}
 		}
-		
-		
 
 		// check if button is pressed
 		for (int i = 0; i < NUM_SETS; i++)
