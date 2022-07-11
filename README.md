@@ -1,9 +1,27 @@
 # CoffeeVCV Modules
 
+![V2.3](images/v2.3-Group.png)
+## v2.3.0 07 July 2022
+  * Added module Fork2
+    * Compare an input with a threshold and output one of two other inputs.
+  * Added module Some3
+    * From a polyphonic input, when triggered, mute a number of the inputs, based on a probability
+  * Added Juice
+    * Select one of 16 sets of 8 fixed voltages, based on a CV input.
+  * Added Twinned2
+    * A sequencer with pair of 8 step notes, gates, randomisation and polyphonic input.
+  * Fixed Tumble
+    * Problems with gates
+
+---
+
 ![Coffee VCV Family](images/Coffee-Family1.png)
 
 Modules for [VCV Rack](https://github.com/VCVRack/Rack), an open-source Eurorack-style virtual modular synthesizer:
-
+  - [Twinned2](#Twinned2)
+  - [Juice](#Juice)
+  - [Some3](#Some3)
+  - [Fork2](#fork2)
   - [Tumble](#Tumble)
   - [Together](#Together)
   - [Travel](#Travel)
@@ -16,9 +34,115 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack), an open-source Eurorack
   - [Fork](#Fork)
   
 ---
+## <a name="Twinned2"></a> Twinned2
+![Tumble panel](images/Twinned2-Panel.png)
+
+### Overview
+Twinned2 is a sequencer with a pair of 8 step note sequences.  Each step has a probability, and that determines which sequennce the played note comes from.  Both sequences also have variable gates.  The longest gate time is one whole beat (100%), the shortest is 0%, essentailly muted.  The beat is determined by the inpute clock.
+
+### Features
+* Clock input with manual trigger
+* Reset input with manual trigger
+* Two separate 8 step sequences (A/B)each with
+  * 8 knobs for notes (0 to 1v)
+  * 8 knobs for octave (-10 to 10v)
+  * 8 knobs gates (0 to 100%)
+  * Input to provide 8 channel polyphonic notes
+  * Input and manual trigger for note randomisation (randomisation amout is manually contolable)
+  * Input and manual trigger for gate duration randomisation
+  * v/oct output
+  * polyphonic gate output
+* v/oct out controled by probability
+* polyphonic gate output controlled by probability
+* End of cycle trigger
+* 8 knobs to control probability between sequence A and B
+* Input to control sequence slection
+* Knob to control selection threshold
+* Steps input to set number of steps
+* Steps know to set number of steps
+* Button for randomizing groups of controlls
+* Knob to control amount of randomization
+* Context Menus for
+  * Polyphonic/Monophonic gate output
+  * Control visual updates
+  * Copy notes or gates between sequences
+  * Control randomisation
+  * Control voltage scales
+
+
+### Basic Operation
+
+#### __Clock and Reset__
+Connect a clock and reset, or use the manual button on the top right of the inputs.
+
+#### __Notes, Octaves and Gates__
+The module is roughly mirrored from left to right, down the centre column of knobs (probability).
+
+The far left column control the gates for sequence A.  The range for gates is 0% to 100%, which represents the duration between clock triggers.  100% is fully open for the whole duration.
+
+The next two columns of knobs are octave and note.  The smaller knob is octave (-10v to 10v), the larger is note (0v to 1v), these are summed to produce pitch for that step of sequence A.
+
+Sequence B is reversed, far right is gate.
+
+#### __Probability__
+The centre column of knobs is probability.  The range is 0v to 1v.  For each step probability is assessed, pitch and gate will be from the winning sequence.  An indicator light will flash showing which sequence was selected.  Setting probability to 0v will always select sequence A, 1v will always select sequence B.  0.5v is essentially a 50/50 coin toss.
+
+#### __Pitch Output__
+Accross the bottom of the module are three outputs.  The one on the left is dedicated to sequence A, the one of the right is for sequence B.  The centre output is for pitch selected by probability.
+
+#### __Gate output and End of Cycle__
+On the right of the module are four outputs arranged virtically.  From the top, here's their purpose.
+* Sequence A Gates
+* Sequence B Gates
+* Gates selected by probability
+* End of Cycle trigger
+
+Gate outout is 0v or 10v.
+If gate polyphony is selected in the context menu, then 8 channels per output is produced.
+
+#### __Polyphonic input__
+For both sequence, gates and pitch can be provided by 8 channel polyphony, to the inputs directly above the respective knob columns.
+By daults knob controls will be visually updted to reflect polyphonic input.  This can be adjusted in the context menu.
+
+#### __Sequence length__
+The default number of steps is 8.
+To set an alternate length, either use the knob on the far left called 'Steps', or provide positive voltage to 'Steps Input'.  The default range os 0v to 10v., this can be changed in the context menu, to 0v-1v or 0v-8v.  If the provided voltage is out of range, a red led will show on the Steps Input.
+
+---
+## <a name="Juice"></a> Juice
+![Juice panel](images/Juice-Panel.png)
+
+### Overview
+
+### Features
+
+### Basic Operation
+
+---
+## <a name="Some3"></a> Some3
+![Some3 panel](images/Some3-Panel.png)
+
+### Overview
+
+### Features
+
+### Basic Operation
+
+---
+## <a name="Fork2"></a> Fork2
+![Fork2 panel](images/Fork2-Panel.png)
+
+### Overview
+
+### Features
+
+### Basic Operation
+
+---
 ## <a name="Tumble"></a> Tumble
 ![Tumble panel](images/Tumble-Panel.png)
 
+### Overview
 Tumble, provides chain of up to 8 pulsing countdowns, which can produce bursts of triggers or gates.  This can be used as a sequencer, or a pulse generator.
 Tumble pairs well with other logic modules.
 
@@ -67,6 +191,7 @@ Global trig and End of Cycle trig are shown on the left scope, in purple and blu
 ## <a name="Together"></a> Together
 ![Together panel](images/Together-Panel.png)
 
+### Overview
 Together, is a fun Euclidian sequencer which provides a bank of dividers, resulting in triggers and gates, and 4 CV outputs.
 
 ### Features
@@ -212,6 +337,7 @@ To the immediate right of column 4, is the triggers for each row.  These operate
 ## <a name="Travel"></a> Travel
 ![Travel panel](images/Travel-Panel.png)
 
+### Overview
 Travel take two values and outputs an interpolation over a defined period of time.
 
 The two values are provided via inputs In1 and In2 which are modified by Scale and Offset.
@@ -245,6 +371,7 @@ In these images, orange is the interpolated value, and blue is the EoC pulse.
 ## <a name="Between"></a> Between
 ![Travel panel](images/Between-Panel.png)
 
+### Overview
 Between will provide a random value, limited by two input values.
 
 Output is set when either trigger manually or via clock or trigger input.
@@ -264,6 +391,7 @@ In1 = -5, In2 = 5
 ## <a name="HiLo"></a> HiLo
 ![HiLo panel](images/HiLo-Panel.png)
 
+### Overview
 HiLo takes two inputs and outputs the highest and lowest value of either input.
 
 Output can be set via manaul or CV trigger.
@@ -283,6 +411,7 @@ Here's an example of two overlapping wave inputs, and the resulting histest and 
 ## <a name="Some"></a> Some
 ![Some panel](images/Some-Panel.png)
 
+### Overview
 The Some module accepts up to 8 inputs, and will output 8 or less depending on a Probability parameter.
 The selection is randomised and made using the manual or CV trigger.
 Only connected inputs are included in the selection process.  Selected inpute are indicated with an illuminated green led.
@@ -300,6 +429,7 @@ In this example with only 4 connected, Probability is still 0.5, so only 2 input
 ## <a name="Some 2"></a> Some 2
 ![Some 2 panel](images/Some2-Panel.png)
 
+### Overview
 The Some2 module is a utility module which can be used to send a single source input to up to 8 randomly selected outputs.
 
 ### Features
@@ -335,6 +465,7 @@ Each time clock trigger, 3 outputs are activated, chossen randomly from the 6 se
 ## <a name="Set"></a> Set
 ![Set panel](images/Set-Panel.png)
 
+### Overview
 Set, is a dual VCA module, which accepts an CV input, applys an offset, some scaling and outputs the result.
 
 The offset and scaling con be controlled via CV.
@@ -356,6 +487,7 @@ In the example below the supply CV is shown in red, and the altered voltage is s
 ## <a name="Tap"></a> Tap
 ![Tap panel](images/Tap-Panel.png)
 
+### Overview
 Tap, is a simple utility module which provides three manual push buttons which each provide a trigger pule and a gate output.
 
 ### Features
@@ -374,6 +506,7 @@ In the example below the button has been pressed a few times, and held for diffe
 ## <a name="Fork"></a> Fork
 ![Fork panel](images/Fork-Panel.png)
 
+### Overview
 Fork is a utility for making random choices.
 
 ### Features
