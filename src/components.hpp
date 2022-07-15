@@ -229,6 +229,17 @@ struct Coffee5mmButton : app::SvgSwitch
 	}
 };
 
+struct CoffeeInput5mmButtonButtonIndicator : app::SvgSwitch
+{
+	CoffeeInput5mmButtonButtonIndicator()
+	{
+		momentary = true;
+		shadow->opacity = 0;
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeInputButton5mmButtonIndicator_1.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeInputButton5mmButtonIndicator_2.svg")));
+	}
+};
+
 struct CoffeeInputButton5mm : app::SvgSwitch
 {
 	CoffeeInputButton5mm()
