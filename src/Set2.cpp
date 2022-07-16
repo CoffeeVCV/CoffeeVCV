@@ -1,7 +1,16 @@
 #include "plugin.hpp"
 #include "components.hpp"
-#define NUM_POINTS 20
+#define NUM_POINTS 40
 #define NUM_SETS 4
+
+// TODO [ ] detect manual movement and unset indicator
+// TODO [ ] add inverse output
+// TODO [ ] change range to 0-1v
+// TODO [ ] add menu to set range
+// TODO [ ] add offset and scale
+// TODO [ ] add input
+// TODO [x] json menus for settings
+// TODO [ ] add menu item for triggering y/n
 
 struct Set2 : Module
 {
@@ -29,7 +38,7 @@ struct Set2 : Module
 	enum LightId
 	{
 		ENUMS(L_SET, NUM_SETS),
-		ENUMS(L_GO, NUM_SETS),
+		ENUMS(L_GO, NUM_SETS * 2),
 		ENUMS(L_POINT, NUM_POINTS * 2),
 		L_CYCLING,
 		LIGHTS_LEN
@@ -56,6 +65,8 @@ struct Set2 : Module
 	bool _ready[NUM_SETS]={true,true,true,true};
 	bool _retriggerEnabled=false;
 	int _lastTarget=-1;
+	bool _menuUnifiedEOC=false;
+	bool _cycleInterupted=false;
 
 
 
@@ -99,6 +110,48 @@ struct Set2 : Module
 		return v;
 	}
 
+	json_t *dataToJson() override
+	{
+		// save menu items to jason
+		json_t *rootJ = json_object();
+
+		json_t *unifiedEOC = json_boolean(_menuUnifiedEOC);
+		json_object_set_new(rootJ, "unifiedEOC", unifiedEOC);
+
+
+		json_t *json_preset = json_array();
+		for (int i = 0; i < NUM_SETS; i++)
+		{
+			json_array_append_new(json_preset, json_real(_set[i]));
+			//DEBUG("set %d: %f", i, _set[i]);
+		}
+		json_object_set_new(rootJ, "Presets", json_preset);
+		return rootJ;
+	}
+
+	void dataFromJson(json_t *rootJ) override
+	{
+		json_t *unifiedEOC = json_object_get(rootJ, "UnifiedEOC");
+		if (unifiedEOC)
+		{
+			_menuUnifiedEOC = json_boolean_value(unifiedEOC);
+		}
+
+		json_t *presetJ = json_object_get(rootJ, "Presets");
+		if (presetJ)
+		{
+			size_t index;
+			json_t *value;
+			json_array_foreach(presetJ, index, value)
+			{
+				_set[index] = json_real_value(value);
+				if(_set[index]>0)
+					_setInUse[index]=true;
+				//DEBUG("set %d: %f", index, _set[index]);
+			}
+		}
+	}
+
 	void process(const ProcessArgs &args) override
 	{
 		if (_lowPriorityClock.process())
@@ -113,7 +166,8 @@ struct Set2 : Module
 			}
 
 			for(int i=0; i<NUM_SETS; i++){
-				lights[L_GO+i].setBrightness(_target==i?1.f:0.f);
+				lights[L_GO+i].setBrightness(_target==i && !_cycleInterupted ?1.f:0.f);
+				lights[L_SET+i].setBrightness(_setInUse[i]?1.f:0.f);
 			}
 
 			lights[L_CYCLING].setBrightness(_cycling?1.f:0.f);
@@ -171,6 +225,7 @@ struct Set2 : Module
 							_startV=params[P_KNOB].getValue();
 							_lastV=_startV;
 							_ready[i]=false;
+							_cycleInterupted=false;
 						}
 					}
 				}
@@ -197,14 +252,27 @@ struct Set2 : Module
 			{ // cycle is finished
 				_cycling = false;
 				_eocPulse.trigger(1e-3f);
-				outputs[O_EOC+_target].setVoltage(10.f);
-				DEBUG("EOC");
+				if(_menuUnifiedEOC){
+					outputs[O_EOC+0].setVoltage(10.f);
+				} else {
+					outputs[O_EOC+_target].setVoltage(10.f);
+				}
 			}
 		}
 		if(!_eocPulse.process(args.sampleTime)){
-			outputs[O_EOC+_target].setVoltage(0.f);
-			DEBUG("EOC off");
+			if(_menuUnifiedEOC) {
+				outputs[O_EOC+0].setVoltage(0.f);			
+			}else{
+				outputs[O_EOC+_target].setVoltage(0.f);
+			}
 		}
+
+		//knob was moved, stop the cycle
+		if(params[P_KNOB].getValue() != _lastV){
+			_cycling=false;
+			_cycleInterupted=true;
+		}
+
 	}//process
 };//class Set2
 
@@ -235,30 +303,30 @@ struct Set2Widget : ModuleWidget
 		for (int j = 0; j < NUM_POINTS; j++)
 		{
 			float range = 360 * 0.75;
-			float angle = (((range / NUM_POINTS) * j) + 140) * (M_PI / 180);
+			float angle = (((range / NUM_POINTS) * j) + (140)) * (M_PI / 180);
 			DEBUG("angle: %f, j %d", angle, j);
 			float px = x + r * cos(angle);
 			float py = y + r * sin(angle);
-			addChild(createLightCentered<SmallSimpleLight<OrangeLight> >(mm2px(Vec(px, py)), module, Set2::L_POINT + j));
+			addChild(createLightCentered<TinyLight<WhiteLight> >(mm2px(Vec(px, py)), module, Set2::L_POINT + j));
 		}
 
 		x = xOffset;
 		// sets
 		for (int j = 0; j < NUM_SETS; j++)
 		{
-			y = yOffset + sy * 4;
+			y = yOffset + (sy * 3) + 7.5;
 			addChild(createLightCentered<LargeLight<GreenLight> >(mm2px(Vec(x, y)), module, Set2::L_GO + j));
 			y+=sy;
 			addParam(createParamCentered<CoffeeInput5mmButtonButtonIndicator>(mm2px(Vec(x, y)), module, Set2::P_GOBUTTON + j));
 			addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x+3.5, y-3.5)), module, Set2::P_SETBUTTON + j));
-			addChild(createLightCentered<SmallLight<OrangeLight> >(mm2px(Vec(x+3.5, y+3.5)), module, Set2::L_SET + j));
+			addChild(createLightCentered<SmallSimpleLight<OrangeLight> >(mm2px(Vec(x+3.5, y+3.5)), module, Set2::L_SET + j));
 			y+=sy;
 			addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Set2::I_GO + j));
 			y+=sy-2.5;
 			addParam(createParamCentered<CoffeeSwitch3PosHori>(mm2px(Vec(x, y)), module, Set2::P_TIMESCALE_SW + j));
 			y+=sy-2.5;
 			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x , y)), module, Set2::P_TIME + j));
-			y+=sy;
+			y+=sy-2.5;
 			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x , y)), module, Set2::P_SHAPE + j));
 			y+=sy;
 			addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Set2::O_EOC + j));
@@ -267,8 +335,17 @@ struct Set2Widget : ModuleWidget
 		y += sy ;
 		x = mx;
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Set2::O_CV));
-		
 	}
+	void appendContextMenu(Menu* menu) override {
+		Set2* module = dynamic_cast<Set2*>(this->module);
+		assert(module);
+		menu->addChild(new MenuSeparator());
+		menu->addChild(createSubmenuItem("End Of Cycle", "", [=](Menu* menu) {
+		Menu* EOCMenu = new Menu();
+		EOCMenu->addChild(createMenuItem("Single End of Cycle", CHECKMARK(module->_menuUnifiedEOC == true), [module]() { module->_menuUnifiedEOC = !module->_menuUnifiedEOC; }));
+		menu->addChild(EOCMenu);
+		}));
+	};
 };
 
 Model *modelSet2 = createModel<Set2, Set2Widget>("Set2");
