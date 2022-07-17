@@ -49,7 +49,7 @@ struct Set2 : Module
 	dsp::SchmittTrigger _goTrigger[NUM_SETS];
 	dsp::SchmittTrigger _goButtonTrigger[NUM_SETS];
 	dsp::ClockDivider _lowPriorityClock;
-	dsp::PulseGenerator _eocPulse;
+	dsp::PulseGenerator _eocPulse[NUM_SETS];
 	bool _helddown[NUM_SETS] = {false,false,false,false};
 	float _set[NUM_SETS] = {0,0,0,0};
 	bool _setInUse[NUM_SETS] = {false,false,false,false};
@@ -236,7 +236,7 @@ struct Set2 : Module
 		if (_cycling)
 		{
 			_cycleProgress = ((args.frame - _cycleStart) / args.sampleRate) / _targetDuration;
-			DEBUG("Cycling %f", _cycleProgress);
+			//DEBUG("Cycling %f", _cycleProgress);
 			if (_cycleProgress < 1)
 			{
 				if(_lastV != params[P_KNOB].getValue()){
@@ -244,26 +244,30 @@ struct Set2 : Module
 				}
 				
 				float v=calculate_shape(_startV, _set[_target], _cycleProgress, _shape);
-				outputs[O_CV].setVoltage(v);
 				params[P_KNOB].setValue(v);
 				_lastV=v;
 			}
 			else
 			{ // cycle is finished
 				_cycling = false;
-				_eocPulse.trigger(1e-3f);
+				_eocPulse[_target].trigger(1e-3f);
 				if(_menuUnifiedEOC){
 					outputs[O_EOC+0].setVoltage(10.f);
 				} else {
 					outputs[O_EOC+_target].setVoltage(10.f);
+					//DEBUG("EOC %d", _target);
 				}
 			}
 		}
-		if(!_eocPulse.process(args.sampleTime)){
-			if(_menuUnifiedEOC) {
-				outputs[O_EOC+0].setVoltage(0.f);			
-			}else{
-				outputs[O_EOC+_target].setVoltage(0.f);
+		//check to clear eoc
+		for(int i=0; i<NUM_SETS; i++){
+			if(!_eocPulse[i].process(args.sampleTime)){
+				if(_menuUnifiedEOC) {
+					outputs[O_EOC+0].setVoltage(0.f);			
+				}else{
+					outputs[O_EOC+i].setVoltage(0.f);
+					//DEBUG("EOC off %d", _target);
+				}
 			}
 		}
 
@@ -272,6 +276,11 @@ struct Set2 : Module
 			_cycling=false;
 			_cycleInterupted=true;
 		}
+
+		//finally output the knob value
+		outputs[O_CV].setVoltage(params[P_KNOB].getValue());
+
+
 
 	}//process
 };//class Set2
@@ -304,7 +313,7 @@ struct Set2Widget : ModuleWidget
 		{
 			float range = 360 * 0.75;
 			float angle = (((range / NUM_POINTS) * j) + (140)) * (M_PI / 180);
-			DEBUG("angle: %f, j %d", angle, j);
+			//DEBUG("angle: %f, j %d", angle, j);
 			float px = x + r * cos(angle);
 			float py = y + r * sin(angle);
 			addChild(createLightCentered<TinyLight<WhiteLight> >(mm2px(Vec(px, py)), module, Set2::L_POINT + j));
