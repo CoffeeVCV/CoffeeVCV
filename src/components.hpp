@@ -270,6 +270,15 @@ struct CoffeeTinyButtonLatch : CoffeeTinyButton
 	}
 };
 
+struct Coffee3mmButtonLatch : Coffee3mmButton
+{
+	Coffee3mmButtonLatch()
+	{
+		momentary = false;
+		latch = true;
+	}
+};
+
 template <typename TBase>
 struct CoffeeTinyLight : TSvgLight<TBase>
 {
@@ -285,6 +294,16 @@ struct CoffeeTinySimpleLight : TBase
 	CoffeeTinySimpleLight()
 	{
 		this->box.size = mm2px(math::Vec(2, 2));
+	}
+};
+
+
+template <typename TBase = GrayModuleLightWidget>
+struct Coffee3mmSimpleLight : TBase
+{
+	Coffee3mmSimpleLight()
+	{
+		this->box.size = mm2px(math::Vec(3, 3));
 	}
 };
 

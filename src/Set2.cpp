@@ -3,7 +3,7 @@
 #define NUM_POINTS 40
 #define NUM_SETS 4
 
-// TODO [ ] detect manual movement and unset indicator
+// TODO [x] detect manual movement and unset indicator
 // TODO [ ] add inverse output
 // TODO [ ] change range to 0-1v
 // TODO [ ] add menu to set range
@@ -27,6 +27,7 @@ struct Set2 : Module
 	enum InputId
 	{
 		ENUMS(I_GO, NUM_SETS),
+		ENUMS(I_TIME, NUM_SETS),
 		INPUTS_LEN
 	};
 	enum OutputId
@@ -50,38 +51,37 @@ struct Set2 : Module
 	dsp::SchmittTrigger _goButtonTrigger[NUM_SETS];
 	dsp::ClockDivider _lowPriorityClock;
 	dsp::PulseGenerator _eocPulse[NUM_SETS];
-	bool _helddown[NUM_SETS] = {false,false,false,false};
-	float _set[NUM_SETS] = {0,0,0,0};
-	bool _setInUse[NUM_SETS] = {false,false,false,false};
-	int _target=-1;
-	int _cycleStart=0;
-	bool _cycling=false;
-	float _shape=0;
-	float _cycleProgress=0;
-	float _targetDuration=0;
-	float _startV=-1;
-	float _lastV=-1;
-    int _durationScales[3] = {1, 10, 100};
-	bool _ready[NUM_SETS]={true,true,true,true};
-	bool _retriggerEnabled=false;
-	int _lastTarget=-1;
-	bool _menuUnifiedEOC=false;
-	bool _cycleInterupted=false;
-
-
+	bool _helddown[NUM_SETS] = {false, false, false, false};
+	float _set[NUM_SETS] = {0, 0, 0, 0};
+	bool _setInUse[NUM_SETS] = {false, false, false, false};
+	int _target = -1;
+	int _cycleStart = 0;
+	bool _cycling = false;
+	float _shape = 0;
+	float _cycleProgress = 0;
+	float _targetDuration = 0;
+	float _startV = -1;
+	float _lastV = -1;
+	int _durationScales[3] = {1, 10, 100};
+	bool _ready[NUM_SETS] = {true, true, true, true};
+	bool _retriggerEnabled = false;
+	int _lastTarget = -1;
+	bool _menuUnifiedEOC = false;
+	bool _cycleInterupted = false;
 
 	Set2()
 	{
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(P_KNOB , 0.f, 10.f, 0.f, "Knob");
+		configParam(P_KNOB, 0.f, 10.f, 0.f, "Knob");
 		for (int j = 0; j < NUM_SETS; j++)
 		{
 			configButton(P_SETBUTTON + j, "Set.  Long hold to clear");
 			configButton(P_GOBUTTON + j, "Go");
 			configInput(I_GO + j, string::f("Set %d", j + 1));
+			configInput(I_TIME + j, string::f("Set %d duration", j + 1));
 			configParam(P_TIME + j, 0.f, 1.f, 1.f, string::f("Time %d", j + 1));
 			configParam(P_SHAPE + j, -1.f, 1.f, 0.f, string::f("Shape %d", j + 1));
-			configSwitch(P_TIMESCALE_SW + j, 0, 2, 0, string::f("Time Scale %d", j + 1),{"1","10","100"});
+			configSwitch(P_TIMESCALE_SW + j, 0, 2, 0, string::f("Time Scale %d", j + 1), {"1", "10", "100"});
 			configOutput(O_EOC + j, string::f("EOC %d", j + 1));
 		}
 		configOutput(O_CV, "out");
@@ -106,7 +106,7 @@ struct Set2 : Module
 			v2 = startV - ((startV - endV) * exp2);
 			v = (v2 * abs(shape)) + (v1 * (1 - abs(shape)));
 		}
-		//DEBUG("calculate_shape: startV: %f, endV: %f, p: %f, shape: %f, v: %f", startV, endV, p, shape,v);
+		// DEBUG("calculate_shape: startV: %f, endV: %f, p: %f, shape: %f, v: %f", startV, endV, p, shape,v);
 		return v;
 	}
 
@@ -118,14 +118,17 @@ struct Set2 : Module
 		json_t *unifiedEOC = json_boolean(_menuUnifiedEOC);
 		json_object_set_new(rootJ, "unifiedEOC", unifiedEOC);
 
+		json_t *json_preset_values = json_array();
+		json_t *json_preset_flags = json_array();
 
-		json_t *json_preset = json_array();
 		for (int i = 0; i < NUM_SETS; i++)
 		{
-			json_array_append_new(json_preset, json_real(_set[i]));
-			//DEBUG("set %d: %f", i, _set[i]);
+			json_array_append_new(json_preset_values, json_real(_set[i]));
+			json_array_append_new(json_preset_flags, json_boolean(_setInUse[i]));
+			// DEBUG("set %d: %f", i, _set[i]);
 		}
-		json_object_set_new(rootJ, "Presets", json_preset);
+		json_object_set_new(rootJ, "PresetValues", json_preset_values);
+		json_object_set_new(rootJ, "PresetFlags", json_preset_flags);
 		return rootJ;
 	}
 
@@ -137,7 +140,8 @@ struct Set2 : Module
 			_menuUnifiedEOC = json_boolean_value(unifiedEOC);
 		}
 
-		json_t *presetJ = json_object_get(rootJ, "Presets");
+		//extract the preset values
+		json_t *presetJ = json_object_get(rootJ, "PresetValues");
 		if (presetJ)
 		{
 			size_t index;
@@ -145,9 +149,19 @@ struct Set2 : Module
 			json_array_foreach(presetJ, index, value)
 			{
 				_set[index] = json_real_value(value);
-				if(_set[index]>0)
-					_setInUse[index]=true;
-				//DEBUG("set %d: %f", index, _set[index]);
+				if (_set[index] > 0)
+					_setInUse[index] = true;
+			}
+		}
+		//extract the preset flags
+		json_t *presetFlagsJ = json_object_get(rootJ, "PresetFlags");
+		if (presetFlagsJ)
+		{
+			size_t index;
+			json_t *value;
+			json_array_foreach(presetFlagsJ, index, value)
+			{
+				_setInUse[index] = json_boolean_value(value);
 			}
 		}
 	}
@@ -156,134 +170,161 @@ struct Set2 : Module
 	{
 		if (_lowPriorityClock.process())
 		{
-			
-			//update lights
-			float m=paramQuantities[P_KNOB]->getMaxValue();
-			int v = (params[P_KNOB].getValue() /  m) * NUM_POINTS;
+
+			// update lights
+			float m = paramQuantities[P_KNOB]->getMaxValue();
+			int v = (params[P_KNOB].getValue() / m) * NUM_POINTS;
 			for (int j = 0; j < NUM_POINTS; j++)
 			{
 				lights[L_POINT + j].setBrightness(j < v ? 1.f : 0.f);
 			}
 
-			for(int i=0; i<NUM_SETS; i++){
-				lights[L_GO+i].setBrightness(_target==i && !_cycleInterupted ?1.f:0.f);
-				lights[L_SET+i].setBrightness(_setInUse[i]?1.f:0.f);
+			for (int i = 0; i < NUM_SETS; i++)
+			{
+				lights[L_GO + i].setBrightness(_target == i && !_cycleInterupted ? 1.f : 0.f);
+				lights[L_SET + i].setBrightness(_setInUse[i] ? 1.f : 0.f);
 			}
 
-			lights[L_CYCLING].setBrightness(_cycling?1.f:0.f);
-
+			lights[L_CYCLING].setBrightness(_cycling ? 1.f : 0.f);
 		}
 
 		// cycle through each set
 		for (int i = 0; i < NUM_SETS; i++)
 		{
-			//check if the set button is pressed
-			bool setButtonPressed=_setButtonTrigger[i].process(params[P_SETBUTTON + i].getValue());
+			// check if the set button is pressed
+			bool setButtonPressed = _setButtonTrigger[i].process(params[P_SETBUTTON + i].getValue());
 			if (setButtonPressed)
 			{
-				if(_helddown[i]==false){
+				if (_helddown[i] == false)
+				{
 					_setTimer[i].reset();
-					_helddown[i]=true;
+					_helddown[i] = true;
 				}
 			}
 
-			//short hold - set
-			if(_helddown[i] && _setInUse[i]==false){
-				if(_setTimer[i].process(args.sampleTime)<1.0){
-					_setInUse[i]=true;
-					_set[i]=params[P_KNOB].getValue();
+			// short hold - set
+			if (_helddown[i] && _setInUse[i] == false)
+			{
+				if (_setTimer[i].process(args.sampleTime) < 1.0)
+				{
+					_setInUse[i] = true;
+					_set[i] = params[P_KNOB].getValue();
 					lights[L_SET + i].setBrightness(1.f);
 				}
-				_helddown[i]=false;
+				_helddown[i] = false;
 			}
 
-			//long hold clear 
-			if(_helddown[i] && _setTimer[i].process(args.sampleTime)>1.f){
-				_setInUse[i]=false;
+			// long hold clear
+			if (_helddown[i] && _setTimer[i].process(args.sampleTime) > 1.f)
+			{
+				_setInUse[i] = false;
 				lights[L_SET + i].setBrightness(0.f);
-				_helddown[i]=false;
+				_helddown[i] = false;
 			}
 
-			//check if we need to move towards a value
+			// check if we need to move towards a value
 
-			//only check for trigger is the set have been saved
-			if(_setInUse[i]){
-				//make sure the button was released before
-				if(_ready[i]){
-					//if this set was a retrigger and retriggering enabled
-					if(i!=_lastTarget || (i==_lastTarget && _retriggerEnabled)){
+			// only check for trigger is the set have been saved
+			if (_setInUse[i])
+			{
+				// make sure the button was released before
+				if (_ready[i])
+				{
+					// if this set was a retrigger and retriggering enabled
+					if (i != _lastTarget || (i == _lastTarget && _retriggerEnabled))
+					{
 						// check button press or trigger
-						bool goButtonPressed=_goTrigger[i].process(params[P_GOBUTTON + i].getValue());
-						bool goTriggered=_goTrigger[i].process(inputs[I_GO + i].getVoltage());
+						bool goButtonPressed = _goTrigger[i].process(params[P_GOBUTTON + i].getValue());
+						bool goTriggered = _goTrigger[i].process(inputs[I_GO + i].getVoltage());
 
-						if(goButtonPressed || goTriggered){
-							_target=i;
-							_cycleStart=args.frame;
-							_cycling=true;
-							_shape=params[P_SHAPE + i].getValue();
-							_targetDuration=params[P_TIME + i].getValue() * _durationScales[int(params[P_TIMESCALE_SW + i].getValue())];
-							_startV=params[P_KNOB].getValue();
-							_lastV=_startV;
-							_ready[i]=false;
-							_cycleInterupted=false;
+						if (goButtonPressed || goTriggered)
+						{
+							_target = i;
+							_cycleStart = args.frame;
+							_cycling = true;
+							_shape = params[P_SHAPE + i].getValue();
+
+							float timeunit;
+							if (inputs[I_TIME + i].isConnected())
+							{
+								timeunit = inputs[I_TIME + i].getVoltage();
+							}
+							else
+							{
+								timeunit = params[P_TIME + i].getValue();
+							}
+
+							_targetDuration = timeunit * _durationScales[int(params[P_TIMESCALE_SW + i].getValue())];
+							_startV = params[P_KNOB].getValue();
+							_lastV = _startV;
+							_ready[i] = false;
+							_cycleInterupted = false;
 						}
 					}
 				}
-				_ready[i]=params[P_GOBUTTON+i].getValue()>0.5 ? false : true;
+				_ready[i] = params[P_GOBUTTON + i].getValue() > 0.5 ? false : true;
 			}
 		}
-		
+
 		if (_cycling)
 		{
 			_cycleProgress = ((args.frame - _cycleStart) / args.sampleRate) / _targetDuration;
-			//DEBUG("Cycling %f", _cycleProgress);
+			// DEBUG("Cycling %f", _cycleProgress);
 			if (_cycleProgress < 1)
 			{
-				if(_lastV != params[P_KNOB].getValue()){
-					_cycling=false;
+				if (_lastV != params[P_KNOB].getValue())
+				{
+					_cycling = false;
 				}
-				
-				float v=calculate_shape(_startV, _set[_target], _cycleProgress, _shape);
+
+				float v = calculate_shape(_startV, _set[_target], _cycleProgress, _shape);
 				params[P_KNOB].setValue(v);
-				_lastV=v;
+				_lastV = v;
 			}
 			else
 			{ // cycle is finished
 				_cycling = false;
 				_eocPulse[_target].trigger(1e-3f);
-				if(_menuUnifiedEOC){
-					outputs[O_EOC+0].setVoltage(10.f);
-				} else {
-					outputs[O_EOC+_target].setVoltage(10.f);
-					//DEBUG("EOC %d", _target);
+				if (_menuUnifiedEOC)
+				{
+					outputs[O_EOC + 0].setVoltage(10.f);
+				}
+				else
+				{
+					outputs[O_EOC + _target].setVoltage(10.f);
+					// DEBUG("EOC %d", _target);
 				}
 			}
 		}
-		//check to clear eoc
-		for(int i=0; i<NUM_SETS; i++){
-			if(!_eocPulse[i].process(args.sampleTime)){
-				if(_menuUnifiedEOC) {
-					outputs[O_EOC+0].setVoltage(0.f);			
-				}else{
-					outputs[O_EOC+i].setVoltage(0.f);
-					//DEBUG("EOC off %d", _target);
+		// check to clear eoc
+		for (int i = 0; i < NUM_SETS; i++)
+		{
+			if (!_eocPulse[i].process(args.sampleTime))
+			{
+				if (_menuUnifiedEOC)
+				{
+					outputs[O_EOC + 0].setVoltage(0.f);
+				}
+				else
+				{
+					outputs[O_EOC + i].setVoltage(0.f);
+					// DEBUG("EOC off %d", _target);
 				}
 			}
 		}
 
-		//knob was moved, stop the cycle
-		if(params[P_KNOB].getValue() != _lastV){
-			_cycling=false;
-			_cycleInterupted=true;
+		// knob was moved, stop the cycle
+		if (params[P_KNOB].getValue() != _lastV)
+		{
+			_cycling = false;
+			_cycleInterupted = true;
 		}
 
-		//finally output the knob value
+		// finally output the knob value
 		outputs[O_CV].setVoltage(params[P_KNOB].getValue());
 
-
-
-	}//process
-};//class Set2
+	} // process
+};	  // class Set2
 
 struct Set2Widget : ModuleWidget
 {
@@ -300,20 +341,20 @@ struct Set2Widget : ModuleWidget
 		float x, y;
 
 		// cycling light
-		y=yOffset;
-		x=xOffset;
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(x, y)), module, Set2::L_CYCLING));
+		y = yOffset;
+		x = xOffset;
+		addChild(createLightCentered<MediumLight<RedLight> >(mm2px(Vec(x, y)), module, Set2::L_CYCLING));
 
-		y =yOffset + sy + 7.55;
+		y = yOffset + sy + 5;
 		x = mx;
-		addParam(createParamCentered<CoffeeKnob30mm>(mm2px(Vec(mx, y)), module, Set2::P_KNOB ));
+		addParam(createParamCentered<CoffeeKnob30mm>(mm2px(Vec(mx, y)), module, Set2::P_KNOB));
 		// place points in a circle
-		float r = 18;
+		float r = 17.5;
 		for (int j = 0; j < NUM_POINTS; j++)
 		{
 			float range = 360 * 0.75;
 			float angle = (((range / NUM_POINTS) * j) + (140)) * (M_PI / 180);
-			//DEBUG("angle: %f, j %d", angle, j);
+			// DEBUG("angle: %f, j %d", angle, j);
 			float px = x + r * cos(angle);
 			float py = y + r * sin(angle);
 			addChild(createLightCentered<TinyLight<WhiteLight> >(mm2px(Vec(px, py)), module, Set2::L_POINT + j));
@@ -323,37 +364,40 @@ struct Set2Widget : ModuleWidget
 		// sets
 		for (int j = 0; j < NUM_SETS; j++)
 		{
-			y = yOffset + (sy * 3) + 7.5;
+			y = yOffset + (sy * 3) + 4.5;
 			addChild(createLightCentered<LargeLight<GreenLight> >(mm2px(Vec(x, y)), module, Set2::L_GO + j));
-			y+=sy;
+			y += sy - 2.5;
 			addParam(createParamCentered<CoffeeInput5mmButtonButtonIndicator>(mm2px(Vec(x, y)), module, Set2::P_GOBUTTON + j));
-			addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x+3.5, y-3.5)), module, Set2::P_SETBUTTON + j));
-			addChild(createLightCentered<SmallSimpleLight<OrangeLight> >(mm2px(Vec(x+3.5, y+3.5)), module, Set2::L_SET + j));
-			y+=sy;
+			addParam(createParamCentered<CoffeeTinyButton>(mm2px(Vec(x + 3.5, y - 3.5)), module, Set2::P_SETBUTTON + j));
+			addChild(createLightCentered<SmallSimpleLight<OrangeLight> >(mm2px(Vec(x + 3.5, y + 3.5)), module, Set2::L_SET + j));
+			y += sy;
 			addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Set2::I_GO + j));
-			y+=sy-2.5;
+			y += sy - 2.5;
 			addParam(createParamCentered<CoffeeSwitch3PosHori>(mm2px(Vec(x, y)), module, Set2::P_TIMESCALE_SW + j));
-			y+=sy-2.5;
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x , y)), module, Set2::P_TIME + j));
-			y+=sy-2.5;
-			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x , y)), module, Set2::P_SHAPE + j));
-			y+=sy;
+			y += sy - 4;
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Set2::P_TIME + j));
+			y += sy - 1;
+			addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Set2::I_TIME + j));
+			y += sy - 1;
+			addParam(createParamCentered<CoffeeKnob6mm>(mm2px(Vec(x, y)), module, Set2::P_SHAPE + j));
+			y += sy;
 			addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Set2::O_EOC + j));
-			x+=sx;
+			x += sx;
 		}
-		y += sy ;
+		y += sy;
 		x = mx;
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Set2::O_CV));
 	}
-	void appendContextMenu(Menu* menu) override {
-		Set2* module = dynamic_cast<Set2*>(this->module);
+	void appendContextMenu(Menu *menu) override
+	{
+		Set2 *module = dynamic_cast<Set2 *>(this->module);
 		assert(module);
 		menu->addChild(new MenuSeparator());
-		menu->addChild(createSubmenuItem("End Of Cycle", "", [=](Menu* menu) {
+		menu->addChild(createSubmenuItem("End Of Cycle", "", [=](Menu *menu)
+										 {
 		Menu* EOCMenu = new Menu();
 		EOCMenu->addChild(createMenuItem("Single End of Cycle", CHECKMARK(module->_menuUnifiedEOC == true), [module]() { module->_menuUnifiedEOC = !module->_menuUnifiedEOC; }));
-		menu->addChild(EOCMenu);
-		}));
+		menu->addChild(EOCMenu); }));
 	};
 };
 
