@@ -28,13 +28,15 @@ struct Pick : Module {
 	float _selectRangeMax=0;
 	float _selected=-1;
 	dsp::ClockDivider _lowPriorityClock;
+	dsp::SchmittTrigger _trigger;
+	bool _triggerReady=true;
 
 	Pick() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(P_SELECT, 0.f, NUM_ROWS - 1.f, 0.f, "Select");
 		paramQuantities[P_SELECT]->snapEnabled = true;
 
-		
+		configInput(I_TRIG, "Trigger");
 		configInput(I_SELECT, "Select CV");
 		for(int i=0; i<NUM_ROWS; i++) {
 			configInput(I_CV + i, string::f("Input %d", i + 1));
@@ -65,18 +67,26 @@ struct Pick : Module {
 		} else {
 			_selected=params[P_SELECT].getValue();
 		}
-		//outputs[O_CV].setVoltage(inputs[I_CV + (int)_selected].getVoltage());
 
+		//check trigger
+		bool triggered=_trigger.process(inputs[I_TRIG].getVoltage());
+		if(_triggerReady && triggered) {
+			_selected++;
+			if(_selected >= NUM_ROWS) {
+				_selected=0;
+			}
+			params[P_SELECT].setValue(_selected);
+		}
+		_triggerReady=!_trigger.isHigh();
 
-
-
-
+		//set lights
 		for(int i=0; i<NUM_ROWS; i++) {
 			if(_selected>-1)
 				lights[L_SELECT + i].setBrightness(_selected==i?1.f:0.f);
 		}
 
 		//DEBUG("%f",inputs[I_SELECT].getVoltage());
+		outputs[O_CV].setVoltage(inputs[I_CV + (int)_selected].getVoltage());
 	
 	}
 };
