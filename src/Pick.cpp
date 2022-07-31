@@ -2,6 +2,9 @@
 #include "components.hpp"
 #define NUM_ROWS 8
 
+// [ ] TODO - Add Reset Input and Button
+
+
 struct Pick : Module {
 	enum ParamId {
 		P_SELECT,
