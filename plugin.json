@@ -166,6 +166,18 @@
       "name": "These",
       "description": "",
       "tags": []
+    },
+    {
+      "slug": "Quant",
+      "name": "Quant",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "Any",
+      "name": "Any",
+      "description": "",
+      "tags": []
     }
   ]
 }
