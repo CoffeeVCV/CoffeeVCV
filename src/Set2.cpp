@@ -8,8 +8,8 @@
 // TODO [x] add offset and scale
 // TODO [x] add input
 // TODO [x] fix lights
-// TODO [ ] json menus for settings
-// TODO [ ] add menu item for retriggering Ignore, Stop, restart
+// TODO [x] json menus for settings
+// TODO [x] add menu item for retriggering Ignore, Stop, restart
 // Ignore - if cycling and button is pressed ignore button press
 // Stop - if cycling and button is pressed stop cycling
 // Restart - if cycling and button is pressed restart cycling

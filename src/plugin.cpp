@@ -23,8 +23,6 @@ void init(Plugin *p)
 	p->addModel(modelJuice);
 	p->addModel(modelTwinned2);
 	p->addModel(modelSet2);
-	p->addModel(modelPick);
-	p->addModel(modelThese);
 	p->addModel(modelAny);
 	p->addModel(modelQuant);
 

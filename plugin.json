@@ -156,26 +156,14 @@
       "tags": []
     },
     {
-      "slug": "Pick",
-      "name": "Pick",
-      "description": "",
-      "tags": []
-    },
-    {
-      "slug": "These",
-      "name": "These",
+      "slug": "Any",
+      "name": "Any",
       "description": "",
       "tags": []
     },
     {
       "slug": "Quant",
       "name": "Quant",
-      "description": "",
-      "tags": []
-    },
-    {
-      "slug": "Any",
-      "name": "Any",
       "description": "",
       "tags": []
     }
