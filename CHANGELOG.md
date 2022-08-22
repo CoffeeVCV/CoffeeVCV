@@ -42,3 +42,11 @@
     * A sequencer with pair of 8 step notes, gates, randomisation and polyphonic input.
   * Updated Module Tumble
     * Fixed issues with gates
+
+## v2.4.0 11 September 2022
+  * Added module SET2
+    * A single large knob with up to 4 presets and smooth interploation over a specified time.
+  * Added module Any
+    * A simple AND/OR logic utility with 8 inputs, 1 output.
+  * Added module Quant
+    * A small, simple, quantizer.

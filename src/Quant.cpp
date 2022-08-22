@@ -1,18 +1,16 @@
 #include "plugin.hpp"
-#include "JWModules/QuantizeUtils.cpp"
 #include "components.hpp"
 
-struct Quant : Module, QuantizeUtils {
+struct Quant : Module {
 	enum ParamId {
-		P_ROOTNOTE,
-		P_SCALE,
-		P_OCTAVE,
+		P_octaveOffset_OFFSET,
+		P_semiOffset_OFFSET,
+		ENUMS(P_NOTE_BUTTON,12),
 		PARAMS_LEN
 	};
 	enum InputId {
-		I_ROOTNOTE,
-		I_SCALE,
-		I_OCTAVE,
+		I_octaveOffset,
+		I_semiOffset,
 		I_VOCT,
 		INPUTS_LEN
 	};
@@ -21,83 +19,120 @@ struct Quant : Module, QuantizeUtils {
 		OUTPUTS_LEN
 	};
 	enum LightId {
+		ENUMS(L_NOTE,12*2),
 		LIGHTS_LEN
 	};
-	float _rootNote=-1;
-	float _scale=-1;
-	float _octave=-1;
-	float _lastRootNote=-1;
-	float _lastScale=-1;
-	float _lastOctave=-1;
+
+	float _octaveOffset=-1;
+	float _lastOctaveOffset=-1;
+	float _semiOffset=-1;
+	float _lastSemiOffset=-1;
+	
+	dsp::ClockDivider _lowPriorityClock;
 
 	Quant() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(P_ROOTNOTE, 0.0, QuantizeUtils::NUM_NOTES-1, QuantizeUtils::NOTE_C, "Root Note");
-		paramQuantities[P_ROOTNOTE]->displayOffset = 1;
-		paramQuantities[P_ROOTNOTE]->snapEnabled = true;
 
-		configParam(P_SCALE, 0.0, QuantizeUtils::NUM_SCALES-1, QuantizeUtils::MINOR, "Scale");
-		paramQuantities[P_SCALE]->displayOffset = 1;
-		paramQuantities[P_SCALE]->snapEnabled = true;
+		for(int i=0;i<12;i++) {
+			configParam(P_NOTE_BUTTON+i, 0.0, 1.0, 1.0, string::f("Note %d", i+1));
+		}
 
-		configParam(P_OCTAVE, -5.f, 5.f, 0.f, "Octave");
-		paramQuantities[P_OCTAVE]->snapEnabled = true;
-
-		configInput(I_ROOTNOTE, "Root Note");
-		configInput(I_SCALE, "Scale");
-		configInput(I_OCTAVE, "Octave");
+		configParam(P_octaveOffset_OFFSET, -5.f, 5.f, 0.f, "Octave Offset");
+		paramQuantities[P_octaveOffset_OFFSET]->snapEnabled = true;
+		configParam(P_semiOffset_OFFSET, 0.f, 12.f, 0.f, "Semi Offset", " semitones");
+		paramQuantities[P_semiOffset_OFFSET]->snapEnabled = true;
+		configInput(I_octaveOffset, "Octave Offset");
+		configInput(I_semiOffset, "Semi Offset");
 		configInput(I_VOCT, "V/OCT In");
 		configOutput(O_VOCT, "V/OCT Out");
+		_lowPriorityClock.setDivision(32);
 	}
 
 	void process(const ProcessArgs& args) override {
-
-		if(inputs[I_ROOTNOTE].isConnected()) {
-			_rootNote = clamp((int)inputs[I_ROOTNOTE].getVoltage(),0,QuantizeUtils::NUM_NOTES-1);
-		} else {
-			_rootNote = params[P_ROOTNOTE].getValue();
-		}
-		if(_rootNote != _lastRootNote) {
-			_lastRootNote = _rootNote;
-			paramQuantities[P_ROOTNOTE]->description = noteName((int)_rootNote);
-		}
-
-		if(inputs[I_SCALE].isConnected()) {
-			_scale = clamp((int)inputs[I_SCALE].getVoltage(),0,QuantizeUtils::NUM_SCALES-1);
-		} else {
-			_scale = params[P_SCALE].getValue();
-		}
-		if(_scale != _lastScale) {
-			_lastScale = _scale;
-			paramQuantities[P_SCALE]->description = scaleName((int)_scale);
+		for (int i = 0; i < 12; i++)
+		{
+			//set the latch button lights
+			//if button to high, set light 
+			if(params[P_NOTE_BUTTON+i].getValue()>0.5) {
+				lights[L_NOTE+i*2+0].setBrightness(1);
+				lights[L_NOTE+i*2+1].setBrightness(0);
+			}
+			else {
+				lights[L_NOTE+i*2+0].setBrightness(0);
+				lights[L_NOTE+i*2+1].setBrightness(0);			
+			}
 		}
 
-		if(inputs[I_OCTAVE].isConnected()) {
-			_octave = clamp((int)inputs[I_OCTAVE].getVoltage(),-5,5);
+		if(inputs[I_octaveOffset].isConnected()) {
+			_octaveOffset = clamp((int)inputs[I_octaveOffset].getVoltage(),-5,5);
 		} else {
-			_octave = params[P_OCTAVE].getValue();
+			_octaveOffset = params[P_octaveOffset_OFFSET].getValue();
 		}
+
+		//update control if changed
+		if(_lastOctaveOffset != _octaveOffset){
+			_lastOctaveOffset = _octaveOffset;
+			params[P_octaveOffset_OFFSET].setValue(_octaveOffset);
+		}
+
+		if(inputs[I_semiOffset].isConnected()) {
+			_semiOffset = clamp((int)inputs[I_semiOffset].getVoltage(),-12,12);
+		} else {
+			_semiOffset = params[P_semiOffset_OFFSET].getValue();
+		}
+
+		//update control if changed
+		if(_lastSemiOffset != _semiOffset){
+			_lastSemiOffset = _semiOffset;
+			params[P_semiOffset_OFFSET].setValue(_semiOffset);
+		}
+
 
 		if(inputs[I_VOCT].isConnected()) {
-			float v=closestVoltageInScale(inputs[I_VOCT].getVoltage(), (int)_rootNote, (int)_scale);
-			//float v=0.f;
-			outputs[O_VOCT].setVoltage(v+_octave);
+			float voltsIn=inputs[I_VOCT].getVoltage();
+
+			//add the semi offset
+			voltsIn+=(_semiOffset * (1.0f/12.0f));
+
+			float bestNote = 10.0;
+			float minDiff = 10.0;
+			float vNote = 0;
+			float vDiff = 0;
+			int vOctave = int(floorf(voltsIn));
+			float vPitch = voltsIn - vOctave;
+			int bestbutton=-1;
+
+			//cycle through the available notes and find the closest one
+			for (int i=0; i < 12; i++) {
+				if(params[P_NOTE_BUTTON+i].getValue()>0.5){
+					vNote = i  / 12.0f;
+					vDiff = fabs(vPitch - vNote);
+					if(vDiff < minDiff){
+						bestNote = vNote;
+						minDiff = vDiff;
+						bestbutton = i;
+					}
+				}
+			}
+			float voltsOut = bestNote + vOctave + _octaveOffset;
+
+			lights[L_NOTE + bestbutton * 2 + 0].setBrightness(0);
+			lights[L_NOTE + bestbutton * 2 + 1].setBrightness(0.9f);
+
+			outputs[O_VOCT].setVoltage(voltsOut);
 		}
 	}
 };
 
-struct NoteKnob : CoffeeKnob8mm {
-	QuantizeUtils *quantizeUtils;
-	NoteKnob(){
-		snap = true;
-	}
-	std::string formatCurrentValue()  {
-		if(getParamQuantity() != NULL){
-			return quantizeUtils->noteName(int(getParamQuantity()->getDisplayValue()));
-		}
-		return "";
+template <typename TBase = GrayModuleLightWidget>
+struct TOrangeWhiteLight : TBase {
+	TOrangeWhiteLight() {
+		this->addBaseColor(SCHEME_ORANGE);
+		this->addBaseColor(SCHEME_WHITE);
 	}
 };
+using OrangeWhiteLight = TOrangeWhiteLight<>;
+
 
 struct QuantWidget : ModuleWidget {
 	QuantWidget(Quant* module) {
@@ -110,18 +145,35 @@ struct QuantWidget : ModuleWidget {
 		float mx =  width/2;
 		float y = yOffset;
 
-		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(mx, y)), module, Quant::P_ROOTNOTE));
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(mx, y+sy)), module, Quant::I_ROOTNOTE));
-		y+=sy+sy;
-		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(mx, y)), module, Quant::P_SCALE));
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(mx, y+sy)), module, Quant::I_SCALE));
-		y+=sy+sy;
-		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(mx, y)), module, Quant::P_OCTAVE));
-		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(mx, y+sy)), module, Quant::I_OCTAVE));
-		y+=sy+sy;
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(mx, y)), module, Quant::P_octaveOffset_OFFSET));
+		y+=sy;
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(mx, y)), module, Quant::I_octaveOffset));
+		y+=sy*1.5;
+
+		addParam(createParamCentered<CoffeeKnob8mm>(mm2px(Vec(mx, y)), module, Quant::P_semiOffset_OFFSET));
+		y+=sy;
+		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(mx, y)), module, Quant::I_semiOffset));
+		y+=15;
+
+		float x=0;
+		float sx=2;
+		for(int i=11; i>=0; i--) {
+			if(i==10 || i==8 || i==6 || i==3 || i==1) {
+				x=mx-sx;
+			} else {
+				x=mx+sx;
+			}
+			addParam(createParamCentered<Coffee3mmButtonLatch>(mm2px(Vec(x, y)), module, Quant::P_NOTE_BUTTON+i));
+			addChild(createLightCentered<MediumSimpleLight<OrangeWhiteLight>>(mm2px(Vec(x, y)), module, Quant::L_NOTE+i*2));
+
+			y+=i==5 ? 4 : 2;  //skip the 5th note's sharp
+		}
+
+		y+=8;
 		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(mx, y)), module, Quant::I_VOCT));
 		y+=sy;
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(mx, y)), module, Quant::O_VOCT));
+
 	}
 };
 
