@@ -26,3 +26,5 @@ extern Model *modelSet2;
 extern Model *modelThese;
 extern Model *modelAny;
 extern Model *modelQuant;
+
+typedef unsigned long long u_int64_t;
