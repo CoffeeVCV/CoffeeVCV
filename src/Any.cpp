@@ -39,7 +39,7 @@ struct Any : Module
 	Any()
 	{
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configSwitch(P_AND_SWITCH, 0, 1, 1, "Mode", {"AND", "OR"});
+		configSwitch(P_AND_SWITCH, 0, 1, 1, "Mode", {"OR", "AND"});
 		for (int i = 0; i < NUM_ROWS; i++)
 		{
 			configInput(I_TRIG + i, string::f("Trigger %d", i));
