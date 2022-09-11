@@ -54,7 +54,7 @@ struct Juice : Module
 
 		void nextSlot()
 		{
-			currentSlot = (++currentSlot) % NUM_SLOTS;
+			currentSlot = (currentSlot+1) % NUM_SLOTS;
 		}
 
 		void prevSlot()
@@ -103,7 +103,7 @@ struct Juice : Module
 				int i = currentSlot;
 				while (!found)
 				{
-					i = (++i) % NUM_SLOTS;
+					i = (i+1) % NUM_SLOTS;
 					found = preset[i].active;
 				}
 				currentSlot = i;

@@ -31,22 +31,14 @@
   * Updated module HiLo
     * Cosmetic changes
 
-## v2.3.0 01 July 2022
+## v2.3.0 07 July 2022
   * Added module Fork2
     * Compare an input with a threshold and output one of two other inputs.
   * Added module Some3
-    * From a polyphonic input, when triggered, mute a number of the inputs, based on a probability.
-  * Added module Juice
-    * A polyphonic utility - select one of 16 sets of 8 fixed voltages, based on a CV input.
-  * Added module Twinned2
+    * From a polyphonic input, when triggered, mute a number of the inputs, based on a probability
+  * Added Juice
+    * Select one of 16 sets of 8 fixed voltages, based on a CV input.
+  * Added Twinned2
     * A sequencer with pair of 8 step notes, gates, randomisation and polyphonic input.
-  * Updated Module Tumble
-    * Fixed issues with gates
-
-## v2.4.0 11 September 2022
-  * Added module SET2
-    * A single large knob with up to 4 presets and smooth interploation over a specified time.
-  * Added module Any
-    * A simple AND/OR logic utility with 8 inputs, 1 output.
-  * Added module Quant
-    * A small, simple, quantizer.
+  * Fixed Tumble
+    * Problems with gates
