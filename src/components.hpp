@@ -129,6 +129,58 @@ struct CoffeeKnob10mm : app::SvgKnob
 	}
 };
 
+struct CoffeeKnob16mm : app::SvgKnob
+{
+	widget::SvgWidget *bg;
+
+	CoffeeKnob16mm()
+	{
+		minAngle = -0.75 * M_PI;
+		maxAngle = 0.75 * M_PI;
+		shadow->opacity = 0;
+		bg = new widget::SvgWidget;
+		fb->addChildBelow(bg, tw);
+
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob16mm.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob16mm_bg.svg")));
+	}
+};
+
+
+struct CoffeeKnob20mm : app::SvgKnob
+{
+	widget::SvgWidget *bg;
+
+	CoffeeKnob20mm()
+	{
+		minAngle = -0.75 * M_PI;
+		maxAngle = 0.75 * M_PI;
+		shadow->opacity = 0;
+		bg = new widget::SvgWidget;
+		fb->addChildBelow(bg, tw);
+
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob20mm.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob20mm_bg.svg")));
+	}
+};
+
+struct CoffeeKnob30mm : app::SvgKnob
+{
+	widget::SvgWidget *bg;
+
+	CoffeeKnob30mm()
+	{
+		minAngle = -0.75 * M_PI;
+		maxAngle = 0.75 * M_PI;
+		shadow->opacity = 0;
+		bg = new widget::SvgWidget;
+		fb->addChildBelow(bg, tw);
+
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob30mm.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeKnob30mm_bg.svg")));
+	}
+};
+
 template <typename TBase = GrayModuleLightWidget>
 struct TOrangeLight : TBase
 {
@@ -177,6 +229,17 @@ struct Coffee5mmButton : app::SvgSwitch
 	}
 };
 
+struct CoffeeInput5mmButtonButtonIndicator : app::SvgSwitch
+{
+	CoffeeInput5mmButtonButtonIndicator()
+	{
+		momentary = true;
+		shadow->opacity = 0;
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeInputButton5mmButtonIndicator_1.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/components/CoffeeInputButton5mmButtonIndicator_2.svg")));
+	}
+};
+
 struct CoffeeInputButton5mm : app::SvgSwitch
 {
 	CoffeeInputButton5mm()
@@ -207,6 +270,15 @@ struct CoffeeTinyButtonLatch : CoffeeTinyButton
 	}
 };
 
+struct Coffee3mmButtonLatch : Coffee3mmButton
+{
+	Coffee3mmButtonLatch()
+	{
+		momentary = false;
+		latch = true;
+	}
+};
+
 template <typename TBase>
 struct CoffeeTinyLight : TSvgLight<TBase>
 {
@@ -222,6 +294,16 @@ struct CoffeeTinySimpleLight : TBase
 	CoffeeTinySimpleLight()
 	{
 		this->box.size = mm2px(math::Vec(2, 2));
+	}
+};
+
+
+template <typename TBase = GrayModuleLightWidget>
+struct Coffee3mmSimpleLight : TBase
+{
+	Coffee3mmSimpleLight()
+	{
+		this->box.size = mm2px(math::Vec(3, 3));
 	}
 };
 

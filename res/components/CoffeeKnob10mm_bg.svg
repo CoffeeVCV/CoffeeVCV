@@ -28,10 +28,10 @@
      fit-margin-right="0"
      fit-margin-bottom="0"
      inkscape:zoom="6.0220562"
-     inkscape:cx="8.5518963"
-     inkscape:cy="30.222236"
+     inkscape:cx="8.6349244"
+     inkscape:cy="30.305264"
      inkscape:window-width="1280"
-     inkscape:window-height="675"
+     inkscape:window-height="674"
      inkscape:window-x="0"
      inkscape:window-y="25"
      inkscape:window-maximized="0"
@@ -42,11 +42,12 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-1.8607363,0.83909031)">
+     transform="translate(-1.8607363,0.83909031)"
+     style="display:none">
     <g
        id="g31009"
-       transform="matrix(1.2499951,0,0,1.2500024,2.0031435,-0.6966823)"
-       style="display:none">
+       transform="matrix(1.249996,0,0,1.25,2.0056822,-0.69819057)"
+       style="display:inline">
       <circle
          style="fill:#fdf2dd;stroke:#603601;stroke-width:0.382566;stroke-miterlimit:4;stroke-dasharray:none;stop-color:#000000"
          id="path30659"

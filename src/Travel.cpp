@@ -99,6 +99,28 @@ struct Travel : Module
 		}
 	}
 
+	float calculate_shape(float startV, float endV, float p, float shape)
+	{
+		float exp1 = pow(2, 10 * (p - 1));
+		float exp2 = (1 - pow(2, -10 * p));
+		float v, v1, v2;
+		v1 = startV - ((startV - endV) * p); // linear
+
+		// -1 < p_shape < 1
+		if (shape >= 0)
+		{
+			v2 = startV - ((startV - endV) * exp1);
+			v = (v2 * shape) + (v1 * (1 - shape));
+		}
+		else
+		{
+			v2 = startV - ((startV - endV) * exp2);
+			v = (v2 * abs(shape)) + (v1 * (1 - abs(shape)));
+		}
+		return v;
+	}
+
+
 	void process(const ProcessArgs &args) override
 	{
 
@@ -143,6 +165,7 @@ struct Travel : Module
 					v2 = i_CV1 - ((i_CV1 - i_CV2) * exp2);
 					v = (v2 * abs(p_shape)) + (v1 * (1 - abs(p_shape)));
 				}
+				v=calculate_shape(i_CV1, i_CV2, cycleProgress, p_shape);
 				outputs[O_CV1].setVoltage(v);
 			}
 			else
