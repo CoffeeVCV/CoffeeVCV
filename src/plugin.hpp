@@ -25,3 +25,5 @@ extern Model *modelTwinned2;
 extern Model *modelSet2;
 extern Model *modelAny;
 extern Model *modelQuant;
+
+typedef unsigned long long u_int64_t;
