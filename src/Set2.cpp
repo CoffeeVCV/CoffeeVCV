@@ -3,18 +3,6 @@
 #define NUM_POINTS 40
 #define NUM_SETS 4
 
-// TODO [x] detect manual movement and unset indicator
-// TODO [x] change range to 0-1v
-// TODO [x] add offset and scale
-// TODO [x] add input
-// TODO [x] fix lights
-// TODO [x] json menus for settings
-// TODO [x] add menu item for retriggering Ignore, Stop, restart
-// Ignore - if cycling and button is pressed ignore button press
-// Stop - if cycling and button is pressed stop cycling
-// Restart - if cycling and button is pressed restart cycling
-
-
 struct Set2 : Module
 {
 	enum ParamId
@@ -169,7 +157,7 @@ struct Set2 : Module
 			_retriggerMode = 0;
 		}
 
-		//extract the preset values
+		// extract the preset values
 		json_t *presetJ = json_object_get(rootJ, "PresetValues");
 		if (presetJ)
 		{
@@ -182,7 +170,7 @@ struct Set2 : Module
 					_presetActive[index] = true;
 			}
 		}
-		//extract the preset flags
+		// extract the preset flags
 		json_t *presetFlagsJ = json_object_get(rootJ, "PresetFlags");
 		if (presetFlagsJ)
 		{
@@ -204,17 +192,16 @@ struct Set2 : Module
 			int v = (params[P_KNOB].getValue() / m) * NUM_POINTS;
 			for (int j = 0; j < NUM_POINTS; j++)
 			{
-				lights[L_POINT + j * 2 +0].setBrightness(j <= v ? 1.f : 0.f);
-				lights[L_POINT + j * 2 +1].setBrightness(0.f);
+				lights[L_POINT + j * 2 + 0].setBrightness(j <= v ? 1.f : 0.f);
+				lights[L_POINT + j * 2 + 1].setBrightness(0.f);
 			}
 
-			if(_cycling) 
+			if (_cycling)
 			{
 				int l = NUM_POINTS * _set[_target];
-				lights[L_POINT + l * 2 +0].setBrightness(0.f);
-				lights[L_POINT + l * 2 +1].setBrightness(1.f);				
+				lights[L_POINT + l * 2 + 0].setBrightness(0.f);
+				lights[L_POINT + l * 2 + 1].setBrightness(1.f);
 			}
-
 
 			for (int i = 0; i < NUM_SETS; i++)
 			{
@@ -230,22 +217,20 @@ struct Set2 : Module
 		{
 			// check if the set button is pressed
 			bool setButtonPressed = _setButtonTrigger[i].process(params[P_SETBUTTON + i].getValue());
-			if(setButtonPressed)
+			if (setButtonPressed)
 			{
-				if(_presetActive[i]){
-					_presetActive[i]=false;
+				if (_presetActive[i])
+				{
+					_presetActive[i] = false;
 					lights[L_SET + i].setBrightness(0.f);
-				} else {
-					_presetActive[i]=true;
+				}
+				else
+				{
+					_presetActive[i] = true;
 					_set[i] = params[P_KNOB].getValue();
-			 		lights[L_SET + i].setBrightness(1.f);
+					lights[L_SET + i].setBrightness(1.f);
 				}
 			}
-
-
-
-
-	
 
 			// check if we need to move towards a value
 			// only check for trigger is the set have been saved
@@ -254,22 +239,22 @@ struct Set2 : Module
 				// make sure the button was released before
 				if (_ready[i])
 				{
-					bool retrigger=(i == _lastTarget && _cycling) ? true : false;
-					
+					bool retrigger = (i == _lastTarget && _cycling) ? true : false;
+
 					// check button press or trigger
 					bool goButtonPressed = _goTrigger[i].process(params[P_GOBUTTON + i].getValue());
 					bool goTriggered = _goTrigger[i].process(inputs[I_GO + i].getVoltage());
 
 					if (goButtonPressed || goTriggered)
 					{
-						if(retrigger && _cycling && _retriggerMode==RETRIGGER_STOPS)
+						if (retrigger && _cycling && _retriggerMode == RETRIGGER_STOPS)
 						{
 							_cycling = false;
 							_cycleInterupted = true;
 						}
 
-
-						if(!retrigger || (retrigger && _retriggerMode==RETRIGGER_RESTARTS)){
+						if (!retrigger || (retrigger && _retriggerMode == RETRIGGER_RESTARTS))
+						{
 							_target = i;
 							_cycleStart = args.frame - 1;
 							_cycling = true;
@@ -286,13 +271,13 @@ struct Set2 : Module
 							}
 
 							_targetDuration = timeunit * _durationScales[int(params[P_TIMESCALE_SW + i].getValue())];
-							if(_targetDuration < (1/args.sampleRate)*1.0)
-								_targetDuration = (1/args.sampleRate)*1;
+							if (_targetDuration < (1 / args.sampleRate) * 1.0)
+								_targetDuration = (1 / args.sampleRate) * 1;
 							_startV = params[P_KNOB].getValue();
 							_lastV = _startV;
 							_ready[i] = false;
 							_cycleInterupted = false;
-							_lastTarget=i;
+							_lastTarget = i;
 						}
 					}
 				}
@@ -358,35 +343,35 @@ struct Set2 : Module
 		// scale it and add the offset
 		// if input is connected use that too
 
-		float scale=params[P_SCALE].getValue();
-		float offset=params[P_OFFSET].getValue();
-		float v=params[P_KNOB].getValue();
-		float max = (1*scale)+offset;		
-		if(inputs[I_CV].isConnected())
+		float scale = params[P_SCALE].getValue();
+		float offset = params[P_OFFSET].getValue();
+		float v = params[P_KNOB].getValue();
+		float max = (1 * scale) + offset;
+		if (inputs[I_CV].isConnected())
 		{
-			v*=inputs[I_CV].getVoltage();
-			max=(inputs[I_CV].getVoltage()*scale)+offset;
+			v *= inputs[I_CV].getVoltage();
+			max = (inputs[I_CV].getVoltage() * scale) + offset;
 		}
 
-		float ov=(v*scale)+offset;
-		outputs[O_CV].setVoltage( ov );
+		float ov = (v * scale) + offset;
+		outputs[O_CV].setVoltage(ov);
 
 		outputs[O_INVCV].setVoltage(max - ov);
 
 	} // process
 };	  // class Set2
 
-
 /** Reads two adjacent lightIds, so `lightId` and `lightId + 1` must be defined */
 template <typename TBase = GrayModuleLightWidget>
-struct TWhiteRedLight : TBase {
-	TWhiteRedLight() {
+struct TWhiteRedLight : TBase
+{
+	TWhiteRedLight()
+	{
 		this->addBaseColor(SCHEME_WHITE);
 		this->addBaseColor(SCHEME_RED);
 	}
 };
 using WhiteRedLight = TWhiteRedLight<>;
-
 
 struct Set2Widget : ModuleWidget
 {
@@ -426,7 +411,7 @@ struct Set2Widget : ModuleWidget
 		// sets
 		for (int j = 0; j < NUM_SETS; j++)
 		{
-			y = yOffset + (sy * 4)+2.5;
+			y = yOffset + (sy * 4) + 2.5;
 			addChild(createLightCentered<LargeLight<GreenLight> >(mm2px(Vec(x, y)), module, Set2::L_GO + j));
 			y += sy;
 			addParam(createParamCentered<CoffeeInput5mmButtonButtonIndicator>(mm2px(Vec(x, y)), module, Set2::P_GOBUTTON + j));
@@ -447,15 +432,15 @@ struct Set2Widget : ModuleWidget
 			x += 13.33;
 		}
 		y = yOffset + 2.5;
-		x = xOffset+(sx*4);
+		x = xOffset + (sx * 4);
 		addInput(createInputCentered<CoffeeInputPort>(mm2px(Vec(x, y)), module, Set2::I_CV));
-		y += sy-2;
-		addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x-2, y)), module, Set2::P_OFFSET));
-		y+=4;
-		addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x+2, y)), module, Set2::P_SCALE));
-		y+=sy-2;
+		y += sy - 2;
+		addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x - 2, y)), module, Set2::P_OFFSET));
+		y += 4;
+		addParam(createParamCentered<CoffeeKnob4mm>(mm2px(Vec(x + 2, y)), module, Set2::P_SCALE));
+		y += sy - 2;
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Set2::O_CV));
-		y+=sy;
+		y += sy;
 		addOutput(createOutputCentered<CoffeeOutputPort>(mm2px(Vec(x, y)), module, Set2::O_INVCV));
 	}
 	void appendContextMenu(Menu *menu) override
@@ -464,20 +449,18 @@ struct Set2Widget : ModuleWidget
 		assert(module);
 		menu->addChild(new MenuSeparator());
 		menu->addChild(createSubmenuItem("End of Cycle", "", [=](Menu *menu)
-		{
+										 {
 			Menu* EOCMenu = new Menu();
 			EOCMenu->addChild(createMenuItem("Global End of Cycle", CHECKMARK(module->_menuUnifiedEOC == true), [module]() { module->_menuUnifiedEOC = true; }));
 			EOCMenu->addChild(createMenuItem("Separate End of Cycles", CHECKMARK(module->_menuUnifiedEOC == false), [module]() { module->_menuUnifiedEOC = false; }));
-			menu->addChild(EOCMenu); 
-		}));
+			menu->addChild(EOCMenu); }));
 		menu->addChild(createSubmenuItem("Retrigger Mode", "", [=](Menu *menu)
-		{
+										 {
 			Menu* RetriggerMenu = new Menu();
 			RetriggerMenu->addChild(createMenuItem("Ignore retriggers", CHECKMARK(module->_retriggerMode == module->RETRIGGER_IGNORE), [module]() { module->_retriggerMode = module->RETRIGGER_IGNORE; }));
 			RetriggerMenu->addChild(createMenuItem("Retrigger stops cycle", CHECKMARK(module->_retriggerMode == module->RETRIGGER_STOPS), [module]() { module->_retriggerMode = module->RETRIGGER_STOPS; }));
 			RetriggerMenu->addChild(createMenuItem("Retrigger restarts cycle", CHECKMARK(module->_retriggerMode == module->RETRIGGER_RESTARTS), [module]() { module->_retriggerMode = module->RETRIGGER_RESTARTS; }));
-			menu->addChild(RetriggerMenu); 
-		}));
+			menu->addChild(RetriggerMenu); }));
 	};
 };
 

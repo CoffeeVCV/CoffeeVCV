@@ -52,7 +52,7 @@ struct Some3 : Module
 
 	float _selectionScaling = 1.f;
 	float _selectionScales[3] = {1.f, 10.f, 16.f};
-	u_int64_t _lastSeed = 876543210;
+	uint64_t _lastSeed = 876543210;
 	int _selectionStart = 0;
 	int _selectionEnd = 0;
 	int _selectionLength = 0;
@@ -102,17 +102,17 @@ struct Some3 : Module
 
 	void onReset() override
 	{
-		u_int64_t seed = getSeed();
+		uint64_t seed = getSeed();
 		setSeed(seed);
 	}
 
-	u_int64_t getSeed()
+	uint64_t getSeed()
 	{
 		float v = params[P_SEED].getValue();
-		return u_int64_t(v * UINT64_MAX);
+		return uint64_t(v * UINT64_MAX);
 	}
 
-	void setSeed(u_int64_t seed)
+	void setSeed(uint64_t seed)
 	{
 		_lastSeed = seed;
 		rng.seed(seed, 12344321);

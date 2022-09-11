@@ -23,7 +23,6 @@ extern Model *modelSome3;
 extern Model *modelJuice;
 extern Model *modelTwinned2;
 extern Model *modelSet2;
-extern Model *modelThese;
 extern Model *modelAny;
 extern Model *modelQuant;
 
