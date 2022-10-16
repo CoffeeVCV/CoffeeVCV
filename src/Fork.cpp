@@ -67,7 +67,7 @@ struct Fork : Module
             if (ready[i] && (i_clock || i_buttom))
             {
                 float r = (random::uniform() * 2) - 1;
-                float p = params[P_PROB].getValue();
+                float p = params[P_PROB + i].getValue();
                 if (inputs[I_PROB + i].isConnected())
                 {
                     p = inputs[I_PROB + i].getVoltage();
