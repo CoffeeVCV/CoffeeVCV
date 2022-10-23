@@ -42,3 +42,11 @@
     * A sequencer with pair of 8 step notes, gates, randomisation and polyphonic input.
   * Fixed Tumble
     * Problems with gates
+
+## v2.4.1 23 October 2022
+  * Fixed bug in Fork2
+    * Second probabality was not working
+  * Changed default in Twinned2
+    * Probability os now 0.0 was 0.5
+  * Changed default in Any
+    * default mode is now OR, was AND
