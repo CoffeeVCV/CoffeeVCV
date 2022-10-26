@@ -222,27 +222,26 @@ struct Juice : Module
 		}
 	}
 
-	void output()
-	{
-		if (_polyphonic)
-		{
-			outputs[O_CV1 + 0].setChannels(NUM_ROWS);
-		} else {
-			outputs[O_CV1 + 0].setChannels(1);
-		}
-		for (int i = 0; i < NUM_ROWS; i++)
-		{
-			
-			if (_polyphonic)
-			{
-				outputs[O_CV1 + 0].setVoltage(params[P_V + i].getValue(), i);
-			}
-			else
-			{
-				outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue());
-			}
-		}
-	}
+	// void output()
+	// {
+	// 	if (_polyphonic)
+	// 	{
+	// 		outputs[O_CV1 + 0].setChannels(NUM_ROWS);
+	// 	} else {
+	// 		outputs[O_CV1 + 0].setChannels(1);
+	// 	}
+	// 	for (int i = 0; i < NUM_ROWS; i++)
+	// 	{
+	// 		if (_polyphonic)
+	// 		{
+	// 			outputs[O_CV1 + 0].setVoltage(params[P_V + i].getValue(), i);
+	// 		}
+	// 		else
+	// 		{
+	// 			outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue());
+	// 		}
+	// 	}
+	// }
 
 	void process(const ProcessArgs &args) override
 	{
@@ -331,30 +330,19 @@ struct Juice : Module
 			lights[L_SLOTINUSE].value = _presetControl.preset[_presetControl.currentSlot].active;
 		}// end low priority divider
 
-		// if (_polyphonic)
-		// {
-		// 	outputs[O_CV1 + 0].setChannels(NUM_ROWS);
-		// } else {
-		// 	outputs[O_CV1 + 0].setChannels(1);
-		// }
-
+		//set polyphony channels
 		outputs[O_CV1 + 0].setChannels(_polyphonic ? NUM_ROWS : 1);
-
 
 		for (int i = 0; i < NUM_ROWS; i++)
 		{
-			outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue(), _polyphonic ? i : 0);
-
-
-
-			// if (_polyphonic)
-			// {
-			// 	outputs[O_CV1 + 0].setVoltage(params[P_V + i].getValue(), i);
-			// }
-			// else
-			// {
-			// 	outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue(), 0);
-			// }
+			if (_polyphonic)
+			{
+				outputs[O_CV1 + 0].setVoltage(params[P_V + i].getValue(), i);
+			}
+			else
+			{
+				outputs[O_CV1 + i].setVoltage(params[P_V + i].getValue(), 0);
+			}
 		}
 
 	}
