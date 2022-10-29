@@ -43,6 +43,14 @@
   * Fixed Tumble
     * Problems with gates
 
+## v2.4.0 11 September 2022
+  * Added module Any
+    * A simple AND/OR logic utility with 8 inputs, 1 output.
+  * Added module Set2
+    * A single large knob with up to 4 presets and smooth interploation over a specified time.
+  * Added Module Quant
+    * A small quantizer.
+
 ## v2.4.1 23 October 2022
   * Fixed bug in Fork2
     * Second probabality was not working
@@ -50,3 +58,4 @@
     * Probability os now 0.0 was 0.5
   * Changed default in Any
     * default mode is now OR, was AND
+

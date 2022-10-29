@@ -1,23 +1,11 @@
 # CoffeeVCV Modules
 
-![V2.3](images/v2.3-Group.png)
-## v2.3.0 07 July 2022
-  * Added module Fork2
-    * Compare an input with a threshold and output one of two other inputs.
-  * Added module Some3
-    * From a polyphonic input, when triggered, mute a number of the inputs, based on a probability
-  * Added Juice
-    * Select one of 16 sets of 8 fixed voltages, based on a CV input.
-  * Added Twinned2
-    * A sequencer with pair of 8 step notes, gates, randomisation and polyphonic input.
-  * Fixed Tumble
-    * Problems with gates
-
----
-
 ![Coffee VCV Family](images/Coffee-Family1.png)
 
 Modules for [VCV Rack](https://github.com/VCVRack/Rack), an open-source Eurorack-style virtual modular synthesizer:
+  - [Set2](#Set2)
+  - [Any](#Any)
+  - [Quant](#Quant)
   - [Twinned2](#Twinned2)
   - [Juice](#Juice)
   - [Some3](#Some3)
@@ -32,7 +20,48 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack), an open-source Eurorack
   - [Set](#Set)
   - [Tap](#Tap)
   - [Fork](#Fork)
+
+
+---
+![V2.4](images/v2.4-Group.png)
+## v2.4.0 11 September 2022
+  * Added module Any
+    * A simple AND/OR logic utility with 8 inputs, 1 output.
+  * Added module Set2
+    * A single large knob with up to 4 presets and smooth interploation over a specified time.
+  * Added Module Quant
+    * A small quantizer.
   
+---
+## <a name="Set2"></a> Set2
+![Set2 panel](images/Set2-Panel.png)
+
+### Overview
+
+### Features
+
+### Basic Operation
+
+---
+## <a name="Any"></a> Any
+![Any panel](images/Any-Panel.png)
+
+### Overview
+
+### Features
+
+### Basic Operation
+
+---
+## <a name="Quant"></a> Quant
+![Quant panel](images/Quant-Panel.png)
+
+### Overview
+
+### Features
+
+### Basic Operation
+
 ---
 ## <a name="Twinned2"></a> Twinned2
 ![Tumble panel](images/Twinned2-Panel.png)
