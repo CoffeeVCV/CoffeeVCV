@@ -157,7 +157,7 @@ struct Twinned2 : Module
 			configParam(P_VOCT2 + NUM_STEPS + i, -10.f, 10.f, 0.f, string::f("Step B Oct %d", i + 1));
 			paramQuantities[P_VOCT2 + NUM_STEPS + i]->snapEnabled = true;
 
-			configParam(P_PROB + i, -0.f, 1.f, 0.5f, string::f("Prob %d", i + 1));
+			configParam(P_PROB + i, -0.f, 1.f, 0.0f, string::f("Prob %d", i + 1));
 
 			// gates
 			configParam(P_GATE + i, 0.f, 1.f, 0.5f, string::f("Gate A %d", i + 1), "%", 0.f, 100.0f);
